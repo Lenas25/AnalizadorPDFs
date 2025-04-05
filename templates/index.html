@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analizador de PDFs</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='styles.css') }}" />
+  </head>
+  <body>
+    <nav>
+      <div>
+        <img
+          src="{{ url_for('static', filename='/assets/logo.png') }}"
+          alt="Logo del sitio" />
+      </div>
+      <span>WordScope</span>
+    </nav>
+    <div>
+      <h1>Analizador de PDFs</h1>
+      <p>Sube archivos PDF para analizar y extraer su contenido.</p>
+      <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".pdf" required />
+        <button type="submit">Enviar PDFs</button>
+      </form>
+    </div>
+  
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>
