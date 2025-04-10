@@ -1,31 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Analizador de PDFs</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='styles.css') }}" />
-  </head>
-  <body>
-    <nav>
-      <div>
-        <img
-          src="{{ url_for('static', filename='/assets/logo.png') }}"
-          alt="Logo del sitio" />
-      </div>
-      <span>WordScope</span>
-    </nav>
-    <div>
-      <h1>Analizador de PDFs</h1>
-      <p>Sube archivos PDF para analizar y extraer su contenido.</p>
-      <form action="/upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="file" accept=".pdf" required />
-        <button type="submit">Enviar PDFs</button>
-      </form>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Analizador Semántico RSL</title>
+    <link rel="stylesheet" href="../static/style.css">
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='assets/logo.png') }}" alt="Logo del sitio">
+        <h1>Analizador Semántico para RSL</h1>
+    </header>
+    
+    <div class="container">
+        <form action="/" method="post" enctype="multipart/form-data">
+            <label for="pdf"><strong>Seleccionar PDF:</strong></label>
+            <input type="file" name="pdf" required>
+            <button type="submit">Extraer Datos</button>
+        </form>
+
+        {% if data %}
+        <h2>Datos Extraídos</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Autores</th>
+                        <th>Año</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ data["Título"] }}</td>
+                        <td>{{ data["Autores"] }}</td>
+                        <td>{{ data["Año"] }}</td>
+                    </tr>
+                </tbody>                
+            </table>
+        </div>
+        <div class="export-btn">
+            <a href="{{ url_for('exportar') }}">
+                <button>Exportar a Excel</button>
+            </a>
+        </div>
+        {% endif %}
     </div>
-  
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
-  </body>
+</body>
 </html>
