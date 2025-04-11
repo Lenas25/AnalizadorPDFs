@@ -1,49 +1,44 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Analizador Semántico RSL</title>
-    <link rel="stylesheet" href="../static/style.css">
-</head>
-<body>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}" />
+    <link
+      rel="icon"
+      href="{{ url_for('static', filename='assets/logo.png') }}"
+      type="image/png" />
+  </head>
+  <body>
     <header>
-        <img src="{{ url_for('static', filename='assets/logo.png') }}" alt="Logo del sitio">
-        <h1>Analizador Semántico para RSL</h1>
+      <img
+        src="{{ url_for('static', filename='assets/logo.png') }}"
+        alt="Logo del sitio" />
+      <h1>Analizador Semántico para RSL</h1>
     </header>
-    
     <div class="container">
-        <form action="/" method="post" enctype="multipart/form-data">
-            <label for="pdf"><strong>Seleccionar PDF:</strong></label>
-            <input type="file" name="pdf" required>
-            <button type="submit">Extraer Datos</button>
-        </form>
-
-        {% if data %}
-        <h2>Datos Extraídos</h2>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Título</th>
-                        <th>Autores</th>
-                        <th>Año</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>{{ data["Título"] }}</td>
-                        <td>{{ data["Autores"] }}</td>
-                        <td>{{ data["Año"] }}</td>
-                    </tr>
-                </tbody>                
-            </table>
+      <p>
+        Esta aplicación nos permite analizar un artículo científico en formato
+        PDF y retornar datos específicos de suma utilidad para estudiantes o
+        investigadores.
+      </p>
+      <div class="demo">
+        <div class="line"></div>
+        <h3>PRUEBA NUESTRA DEMO!</h3>
+        <div class="line"></div>
+      </div>
+      <form action="/extract" method="POST" enctype="multipart/form-data">
+        <label for="pdf"><strong>Seleccionar PDF:</strong></label>
+        <div>
+          <input type="file" id="pdf" name="pdf" required />
+          <button type="submit">Extraer Datos</button>
         </div>
-        <div class="export-btn">
-            <a href="{{ url_for('exportar') }}">
-                <button>Exportar a Excel</button>
-            </a>
-        </div>
+        {% if error %}
+        <p style="color: red; text-align:center">{{ error }}</p>
         {% endif %}
+      </form>
     </div>
-</body>
+  </body>
 </html>
