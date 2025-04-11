@@ -30,7 +30,7 @@ def extract_data_pdf(filepath):
     metadata = doc.metadata
     title = metadata.get("title", "No detectado")
     authors = metadata.get("author", "No detectado")
-    year = metadata.get("year", "No detectado")
+    year = metadata.get("creationDate", "No detectado")
 
     extracted_data["title"] = title
     extracted_data["authors"] = authors
