@@ -13,24 +13,14 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 # Variables temporales para mantener datos extraídos
 extracted_data = {}
 
-# Función para extraer título, autores y año con la librería fitz
-
-
+# Función para extraer título, autores y año con la librería fit
 def extract_data_pdf(filepath):
-
-    # # Buscar el AÑO
-    # year = "No detectado"
-    # for line in lines:
-    #     match = re.search(r"\b(20[0-3][0-9])\b", line)
-    #     if match:
-    #         year = match.group(1)
-    #         break
 
     doc = fitz.open(filepath)
     metadata = doc.metadata
     title = metadata.get("title", "No detectado")
     authors = metadata.get("author", "No detectado")
-    year = metadata.get("creationDate", "No detectado")
+    year = metadata.get("creation_date", "No detectado")
 
     extracted_data["title"] = title
     extracted_data["authors"] = authors
