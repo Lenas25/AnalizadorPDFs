@@ -1,44 +1,43 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Analizador Semántico RSL</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}" />
-    <link
-      rel="icon"
-      href="{{ url_for('static', filename='assets/logo.png') }}"
-      type="image/png" />
-  </head>
-  <body>
-    <header>
-      <img
-        src="{{ url_for('static', filename='assets/logo.png') }}"
-        alt="Logo del sitio" />
-      <h1>Analizador Semántico para RSL</h1>
-    </header>
-    <div class="container">
-      <p>
-        Esta aplicación nos permite analizar un artículo científico en formato
-        PDF y retornar datos específicos de suma utilidad para estudiantes o
-        investigadores.
-      </p>
-      <div class="demo">
-        <div class="line"></div>
-        <h3>PRUEBA NUESTRA DEMO!</h3>
-        <div class="line"></div>
-      </div>
-      <form action="/extract" method="POST" enctype="multipart/form-data">
-        <label for="pdf"><strong>Seleccionar PDF:</strong></label>
-        <div>
-          <input type="file" id="pdf" name="pdf" required />
-          <button type="submit">Extraer Datos</button>
-        </div>
-        {% if error %}
-        <p style="color: red; text-align:center">{{ error }}</p>
-        {% endif %}
-      </form>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Analizador Semántico RSL</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link rel="icon" href="{{ url_for('static', filename='assets/logo.png') }}" type="image/png" />
+</head>
+
+<body>
+  <header>
+    <img src="{{ url_for('static', filename='assets/logo.png') }}" alt="Logo del sitio" />
+    <h1>Analizador Semántico para RSL</h1>
+  </header>
+  <div class="container">
+    <p>
+      Esta aplicación nos permite analizar un artículo científico en formato
+      PDF y retornar datos específicos de suma utilidad para estudiantes o
+      investigadores.
+    </p>
+    <div class="demo">
+      <div class="line"></div>
+      <h3>¡PRUEBA NUESTRA DEMO!</h3>
+      <div class="line"></div>
     </div>
-  </body>
+    <form action="/extract" method="POST" enctype="multipart/form-data">
+      <label for="pdf"><strong>Seleccionar PDF:</strong></label>
+      <div>
+        <input type="file" id="pdf" name="pdf" required />
+        <button type="submit">Extraer Datos</button>
+      </div>
+      {% if error %}
+      <p style="color: red; text-align:center">{{ error }}</p>
+      {% endif %}
+    </form>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 - Proyecto de RSL | UTP</p>
+  </footer>
+</body>
 </html>

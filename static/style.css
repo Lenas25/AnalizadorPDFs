@@ -1,148 +1,166 @@
+html {
+  min-height: 100%;
+  position: relative;
+}
+
 body {
-    font-family: 'Segoe UI', sans-serif;
-    margin: 0;
-    box-sizing: border-box;
-    background-color: #f4f4f4;
+  font-family: "Segoe UI", sans-serif;
+  margin: 0;
+  box-sizing: border-box;
+  background-color: #f4f4f4;
+  min-height: 100vh;
 }
 
 header {
-    background-color: #002147;
-    padding: 10px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
+  background-color: #002147;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
 }
 
 header img {
-    height: 80px;
-    margin-right: 15px;
+  height: 80px;
+  margin-right: 15px;
 }
 
 header h1 {
-    font-size: 1.5em;
-    margin: 0;
+  font-size: 1.5em;
+  margin: 0;
 }
 
 .container {
-    max-width: 900px;
-    margin: 20px auto;
-    padding: 20px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  height: 100%;
 }
 
 h3 {
-    text-align: center;
-    margin-bottom: 20px;
+  text-align: center;
+  margin-bottom: 20px;
 }
 
-.demo{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
+.demo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
 }
 
-.line{
-    width: 20%;
-    height: 2px;
-    background-color: #002147;
-    margin: 0 10px;
+.line {
+  width: 20%;
+  height: 2px;
+  background-color: #002147;
+  margin: 0 10px;
 }
 
 form {
-    margin-bottom: 30px;
+  margin-bottom: 30px;
 }
 
 form div {
-    margin-top: 20px;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
+  margin-top: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 input[type="file"] {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
 }
 
-button, a {
-    text-decoration: none;
-    background-color: #002147;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
+button,
+a {
+  text-decoration: none;
+  background-color: #002147;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
 }
 
-button:hover, a:hover {
-    background-color: #00509e;
+button:hover,
+a:hover {
+  background-color: #00509e;
 }
 
-.export-container{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 20px;
-    flex-direction: column;
+.export-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  flex-direction: column;
 }
 
-a{
-    display: inline-block;
-    margin: 0 auto;
+a {
+  display: inline-block;
+  margin: 0 auto;
 }
 
 .table-container {
-    overflow-x: auto;
+  overflow-x: auto;
 }
 
 table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
 }
 
 th,
 td {
-    padding: 12px;
-    text-align: left;
-    border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+  border: 1px solid #ddd;
 }
 
 th {
-    background-color: #003366;
-    color: white;
+  background-color: #003366;
+  color: white;
 }
 
 tr:nth-child(even) {
-    background-color: #f2f2f2;
+  background-color: #f2f2f2;
+}
+
+footer {
+  background-color: #002147;
+  color: white;
+  text-align: center;
+  margin-top: 40px;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
 }
 
 @media (max-width: 600px) {
+  th,
+  td {
+    font-size: 14px;
+  }
 
-    th,
-    td {
-        font-size: 14px;
-    }
+  header h1 {
+    font-size: 1.2em;
+  }
 
-    header h1 {
-        font-size: 1.2em;
-    }
+  button {
+    width: 100%;
+    margin-top: 10px;
+  }
 
-    button {
-        width: 100%;
-        margin-top: 10px;
-    }
-
-    .export-btn {
-        text-align: center;
-    }
+  .export-btn {
+    text-align: center;
+  }
 }

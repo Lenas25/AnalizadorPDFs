@@ -3,24 +3,38 @@ import fitz
 import os
 import re
 from openpyxl import Workbook
-from openpyxl.styles import PatternFill, Border, Side, Font
+from openpyxl.styles import PatternFill, Border, Side, Font, Alignment
 
 app = Flask(__name__)
 
 # Configuración de la carpeta de subida
 app.config['UPLOAD_FOLDER'] = 'uploads'
 
+# Crear la carpeta 'uploads' si no existe
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+
 # Variables temporales para mantener datos extraídos
 extracted_data = {}
 
-# Función para extraer título, autores y año con la librería fit
-def extract_data_pdf(filepath):
 
+# Función para extraer título, autores y año con la librería fitz
+def extract_data_pdf(filepath):
     doc = fitz.open(filepath)
+
+    # Obtener el titulo y autores desde metadatos
     metadata = doc.metadata
     title = metadata.get("title", "No detectado")
     authors = metadata.get("author", "No detectado")
-    year = metadata.get("creation_date", "No detectado")
+    
+    # Extraendo texto
+    text = ""
+    for page_num in range(min(2, len(doc))):
+        text += doc[page_num].get_text()
+    
+    # Buscando el año con expresiones regular
+    year_match = re.search(r'\b(20[0-3][0-9])\b', text)
+    year = year_match.group(1) if year_match else "No detectado"
 
     extracted_data["title"] = title
     extracted_data["authors"] = authors
@@ -41,6 +55,8 @@ def exportar():
 
     wb = Workbook()
     ws = wb.active
+    ws.title = "Datos extraídos"
+
     headers = ["Título", "Autores", "Año"]
     ws.append(headers)
 
@@ -55,6 +71,7 @@ def exportar():
         cell.fill = header_fill
         cell.border = thin_border
         cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center")
 
     ws.append([extracted_data["title"],
               extracted_data["authors"], extracted_data["year"]])
@@ -62,6 +79,18 @@ def exportar():
     for row in ws.iter_rows(min_row=2, max_row=2, min_col=1, max_col=len(headers)):
         for cell in row:
             cell.border = thin_border
+            cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
+
+    for col in ws.columns:
+        max_length = 0
+        col_letter = col[0].column_letter
+        for cell in col:
+            try:
+                max_length = max(max_length, len(str(cell.value)))
+            except:
+                pass
+        adjusted_width = (max_length + 4) 
+        ws.column_dimensions[col_letter].width = adjusted_width
 
     filename = "datos.xlsx"
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
