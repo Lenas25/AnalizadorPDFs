@@ -126,6 +126,14 @@ tr:nth-child(even) {
     background-color: #f2f2f2;
 }
 
+footer {
+    background-color: #002147;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    margin-top: 40px;
+}
+
 @media (max-width: 600px) {
 
     th,
