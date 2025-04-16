@@ -17,20 +17,21 @@ extracted_data = {}
 
 
 def extract_data_pdf(filepath):
-
-    # # Buscar el AÑO
-    # year = "No detectado"
-    # for line in lines:
-    #     match = re.search(r"\b(20[0-3][0-9])\b", line)
-    #     if match:
-    #         year = match.group(1)
-    #         break
-
     doc = fitz.open(filepath)
+
+    # Obtener el titulo y autores desde metadatos
     metadata = doc.metadata
     title = metadata.get("title", "No detectado")
     authors = metadata.get("author", "No detectado")
-    year = metadata.get("creationDate", "No detectado")
+
+    # Extraendo texto
+    text = ""
+    for page_num in range(min(2, len(doc))):
+        text += doc[page_num].get_text()
+    
+    # Buscando el año con expresiones regular
+    year_match = re.search(r'\b(20[0-3][0-9])\b', text)
+    year = year_match.group(1) if year_match else "No detectado"
 
     extracted_data["title"] = title
     extracted_data["authors"] = authors
