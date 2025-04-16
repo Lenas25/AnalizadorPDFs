@@ -10,8 +10,13 @@ app = Flask(__name__)
 # Configuración de la carpeta de subida
 app.config['UPLOAD_FOLDER'] = 'uploads'
 
+# Crear la carpeta 'uploads' si no existe
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+
 # Variables temporales para mantener datos extraídos
 extracted_data = {}
+
 
 # Función para extraer título, autores y año con la librería fitz
 def extract_data_pdf(filepath):
@@ -21,7 +26,7 @@ def extract_data_pdf(filepath):
     metadata = doc.metadata
     title = metadata.get("title", "No detectado")
     authors = metadata.get("author", "No detectado")
-
+    
     # Extraendo texto
     text = ""
     for page_num in range(min(2, len(doc))):
@@ -84,7 +89,7 @@ def exportar():
                 max_length = max(max_length, len(str(cell.value)))
             except:
                 pass
-        adjusted_width = (max_length + 4)
+        adjusted_width = (max_length + 4) 
         ws.column_dimensions[col_letter].width = adjusted_width
 
     filename = "datos.xlsx"
