@@ -5,6 +5,13 @@ import re
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Border, Side, Font, Alignment
 
+"""
+Este programa es un analizador semantico de archivos PDF que extrae el título, autores y año de publicación de un archivo PDF subido por el usuario.
+Los datos extraídos se almacenan en un archivo Excel que se puede descargar después de la extracción.
+El programa utiliza la librería fitz para leer archivos PDF y openpyxl para crear archivos Excel.
+El programa está diseñado para ser ejecutado como una aplicación web utilizando Flask.
+"""
+
 app = Flask(__name__)
 
 # Configuración de la carpeta de subida
@@ -17,22 +24,21 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 # Variables temporales para mantener datos extraídos
 extracted_data = {}
 
-
 # Función para extraer título, autores y año con la librería fitz
 def extract_data_pdf(filepath):
     doc = fitz.open(filepath)
 
-    # Obtener el titulo y autores desde metadatos
+    # Obtener el titulo y autores desde metadatos, almacenado en cada variable
     metadata = doc.metadata
     title = metadata.get("title", "No detectado")
     authors = metadata.get("author", "No detectado")
     
-    # Extraendo texto
+    # Extraendo texto, se almacena en la variable text
     text = ""
     for page_num in range(min(2, len(doc))):
         text += doc[page_num].get_text()
     
-    # Buscando el año con expresiones regular
+    # Buscando el año con expresiones regular, se almacena en la variable year
     year_match = re.search(r'\b(20[0-3][0-9])\b', text)
     year = year_match.group(1) if year_match else "No detectado"
 
@@ -53,10 +59,12 @@ def exportar():
     if not extracted_data:
         return redirect(url_for("data", error="No hay datos para exportar"))
 
+    # esta variable contiene la clase Workbook de openpyxl, que permite crear un archivo Excel
     wb = Workbook()
     ws = wb.active
     ws.title = "Datos extraídos"
 
+    # varible que contiene los encabezados de la tabla, se almacenan en una lista
     headers = ["Título", "Autores", "Año"]
     ws.append(headers)
 
@@ -92,6 +100,7 @@ def exportar():
         adjusted_width = (max_length + 4) 
         ws.column_dimensions[col_letter].width = adjusted_width
 
+    # variable que contiene la ruta donde se guardara el archivo Excel
     filename = "datos.xlsx"
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     wb.save(filepath)
