@@ -3,7 +3,7 @@ import fitz
 import os
 import re
 from openpyxl import Workbook
-from openpyxl.styles import PatternFill, Border, Side, Font
+from openpyxl.styles import PatternFill, Border, Side, Font, Alignment
 
 app = Flask(__name__)
 
@@ -14,8 +14,6 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 extracted_data = {}
 
 # Función para extraer título, autores y año con la librería fitz
-
-
 def extract_data_pdf(filepath):
     doc = fitz.open(filepath)
 
@@ -52,6 +50,8 @@ def exportar():
 
     wb = Workbook()
     ws = wb.active
+    ws.title = "Datos extraídos"
+
     headers = ["Título", "Autores", "Año"]
     ws.append(headers)
 
@@ -66,6 +66,7 @@ def exportar():
         cell.fill = header_fill
         cell.border = thin_border
         cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center")
 
     ws.append([extracted_data["title"],
               extracted_data["authors"], extracted_data["year"]])
@@ -73,6 +74,18 @@ def exportar():
     for row in ws.iter_rows(min_row=2, max_row=2, min_col=1, max_col=len(headers)):
         for cell in row:
             cell.border = thin_border
+            cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
+
+    for col in ws.columns:
+        max_length = 0
+        col_letter = col[0].column_letter
+        for cell in col:
+            try:
+                max_length = max(max_length, len(str(cell.value)))
+            except:
+                pass
+        adjusted_width = (max_length + 4)
+        ws.column_dimensions[col_letter].width = adjusted_width
 
     filename = "datos.xlsx"
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
