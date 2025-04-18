@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file
-import fitz
+import fitz # Libreria de Pypmupdf
 import os
 import re
 from openpyxl import Workbook
@@ -26,6 +26,10 @@ extracted_data = {}
 
 # Función para extraer título, autores y año con la librería fitz
 def extract_data_pdf(filepath):
+    
+    # asegurar de que la ruta sea absoluta y compatible con formato UTF-8
+    filepath = os.path.abspath(filepath)
+    
     doc = fitz.open(filepath)
 
     # Obtener el titulo y autores desde metadatos, almacenado en cada variable
