@@ -20,7 +20,7 @@
       Puedes exportar estos datos a un archivo Excel para su posterior uso.
     </p>
     </form>
-    {% if data %}
+    {% if data_list %}
     <div class="table-container">
       <table>
         <thead>
@@ -28,14 +28,20 @@
             <th>Título</th>
             <th>Autores</th>
             <th>Año</th>
+            <th>Tema</th>
+            <th>Palabras Claves</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
+         {% for data in data_list %}
+            <tr>
             <td>{{ data["title"] }}</td>
             <td>{{ data["authors"] }}</td>
             <td>{{ data["year"] }}</td>
-          </tr>
+            <td>{{ data["subject"] }}</td>
+            <td>{{ data["keywords"] }}</td>
+            </tr>
+        {% endfor %}
         </tbody>
       </table>
     </div>
@@ -47,10 +53,13 @@
       <a href="/export">
         Exportar a Excel
       </a>
+      <br>
+      <a href="/">
+        Volver a la página principal
+      </a>
     </div>
     {% endif %}
   </div>
-  
   <footer>
     <p>&copy; 2025 - Proyecto de RSL | UTP</p>
   </footer>

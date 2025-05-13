@@ -22,20 +22,23 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
 # Variables temporales para mantener datos extraídos
-extracted_data = {}
+all_extracted_data = []
 
 # Función para extraer título, autores y año con la librería fitz
 def extract_data_pdf(filepath):
-    
     # asegurar de que la ruta sea absoluta y compatible con formato UTF-8
     filepath = os.path.abspath(filepath)
     
     doc = fitz.open(filepath)
+    
+    extracted_data = {}
 
     # Obtener el titulo y autores desde metadatos, almacenado en cada variable
     metadata = doc.metadata
     title = metadata.get("title", "No detectado")
     authors = metadata.get("author", "No detectado")
+    keywords = metadata.get("keywords", "No detectado")
+    subject = metadata.get("subject", "No detectado")
     
     # Extraendo texto, se almacena en la variable text
     text = ""
@@ -49,6 +52,8 @@ def extract_data_pdf(filepath):
     extracted_data["title"] = title
     extracted_data["authors"] = authors
     extracted_data["year"] = year
+    extracted_data["keywords"] = keywords
+    extracted_data["subject"] = subject
 
     return extracted_data
 
@@ -60,7 +65,7 @@ def home():
 # ruta para poder extraer los datos del PDF que estan en una tabla, se usa la libreria openpyxl
 @app.route("/export")
 def exportar():
-    if not extracted_data:
+    if not all_extracted_data:
         return redirect(url_for("data", error="No hay datos para exportar"))
 
     # esta variable contiene la clase Workbook de openpyxl, que permite crear un archivo Excel
@@ -115,16 +120,23 @@ def exportar():
 # ruta para extraer datos del PDF subido por el usuario, aqui se recibe el archivo y se guarda en una carpeta temporal y llama a la funcion extract_data_pdf para extraer los datos
 @app.route("/extract", methods=["POST", "GET"])
 def extract():
-
     if request.method == "POST":
-        file = request.files.get("pdf")
-        if not file or not file.filename.endswith('.pdf'):
-            return render_template("index.html", error="Por favor, sube un archivo válido en formato PDF.")
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-        file.save(filepath)
-        extracted_data = extract_data_pdf(filepath)
-        return render_template("data.html", data=extracted_data)
-    return render_template('index.html')
+        files = request.files.getlist("pdf")  # Obtener todos los archivos subidos
+        if not files or any(not file.filename.endswith('.pdf') for file in files):
+            return render_template("index.html", error="Por favor, sube solo archivos válidos en formato PDF.")
+
+        for file in files:
+            print(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            file.save(filepath)  # Guardar cada archivo
+            extracted_data = extract_data_pdf(filepath) 
+            all_extracted_data.append(extracted_data) 
+            print(all_extracted_data)
+            
+
+        # Renderizar la plantilla con los datos de todos los archivos
+        return render_template("data.html", data_list=all_extracted_data)
+    return redirect(url_for("home"))
 
 
 if __name__ == "__main__":
