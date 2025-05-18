@@ -9,20 +9,24 @@ from google import genai
 
 load_dotenv()
 
+# Configuración de la aplicación Flask
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+# Configuración del cliente de Gemini AI
+cliente = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
+# Lista para almacenar los datos extraídos de los PDFs
 data_extraida = []
 
-def extraer_data_pdf(filepath):
+# Función para extraer metadatos y texto de un PDF, y generar un resumen con IA
+def extraer_data_pdf(urlarchivo):
     """Extrae metadatos y texto del PDF, y genera un resumen con IA."""
-    filepath = os.path.abspath(filepath)
-    doc = fitz.open(filepath)
+    urlarchivo = os.path.abspath(urlarchivo)
+    doc = fitz.open(urlarchivo)
     data_extraida_file = {}
     metadata = doc.metadata
     data_extraida_file["titulo"] = metadata.get("title", "No detectado")
@@ -40,7 +44,7 @@ def extraer_data_pdf(filepath):
 
     try:
         # Generar el resumen usando la API de Gemini
-        respuesta = client.models.generate_content(
+        respuesta = cliente.models.generate_content(
             model="gemini-2.0-flash",
             contents=f"Resumen este texto en un solo parrafo en español: {texto_resumir}"
         )
@@ -53,6 +57,7 @@ def extraer_data_pdf(filepath):
     doc.close()
     return data_extraida_file
 
+# Ruta para cada vez que se presione el botón de "Buscar" se ejecutará la busqueda entre los PDFs local de la carpeta uploads
 @app.route("/buscar", methods=["POST", "GET"])
 def buscar_titulo():
     global data_extraida
@@ -70,13 +75,14 @@ def buscar_titulo():
             return render_template("index.html", data_list=data_extraida)
     return redirect(url_for("home", error="Por favor, ingresa un término de búsqueda."))
 
-
+# Ruta para la página de inicio
 @app.route("/", methods=["GET", "POST"])
 def home():
     global data_extraida
     data_extraida = []
     return render_template('index.html')
 
+# Ruta para la logica y exportar los datos a un archivo Excel
 @app.route("/exportar_excel", methods=["POST"])
 def exportar():
     global data_extraida
@@ -100,14 +106,14 @@ def exportar():
     }
 
     # Filtrar los encabezados basados en las columnas seleccionadas
-    headers = [col for col in ["Titulo", "Autores", "Anio", "Tema", "Palabras", "Resumen"] if mapeo_columnas[col.lower()] in columnas_seleccionadas]
+    encabezado = [col for col in ["Titulo", "Autores", "Anio", "Tema", "Palabras", "Resumen"] if mapeo_columnas[col.lower()] in columnas_seleccionadas]
     ws.append(headers)
 
     header_fill = PatternFill(start_color="002147", end_color="002147", fill_type="solid")
     header_font = Font(color="FFFFFF", bold=True)
     thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
 
-    for col in range(1, len(headers) + 1):
+    for col in range(1, len(encabezado) + 1):
         cell = ws.cell(row=1, column=col)
         cell.fill = header_fill
         cell.border = thin_border
@@ -116,10 +122,10 @@ def exportar():
 
     for data in data_extraida:
         # Filtrar los datos de cada fila según las columnas seleccionadas
-        fila_data = [data[mapeo_columnas[col.lower()]] for col in headers]
+        fila_data = [data[mapeo_columnas[col.lower()]] for col in encabezado]
         ws.append(fila_data)
 
-    for row in ws.iter_rows(min_row=2, min_col=1, max_col=len(headers)):
+    for row in ws.iter_rows(min_row=2, min_col=1, max_col=len(encabezado)):
         for cell in row:
             cell.border = thin_border
             cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
@@ -141,26 +147,11 @@ def exportar():
     file_url = url_for('download_excel')
     return jsonify(url=file_url)
 
+# Ruta para descargar el archivo Excel generado
 @app.route("/download_excel")
 def download_excel():
     filename = "datos.xlsx"
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
-
-@app.route("/extract", methods=["POST"])
-def extract():
-    global data_extraida
-    files = request.files.getlist("pdf")
-    if not files or any(not file.filename.endswith('.pdf') for file in files):
-        return render_template("index.html", error="Por favor, sube solo archivos válidos en formato PDF.")
-
-    data_extraida = [] # Reiniciar la lista para la nueva carga
-    for file in files:
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-        file.save(filepath)
-        extraer_info = extraer_data_pdf(filepath)
-        data_extraida.append(extraer_info)
-
-    return render_template("data.html", data_list=data_extraida)
 
 if __name__ == "__main__":
     app.run(debug=True)

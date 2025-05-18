@@ -92,6 +92,7 @@
     </footer>
 
     <script>
+        // Función para alternar la visibilidad de las columnas según el checkbox
         function toggleColumna(checkbox, columna) {
             const columnas = document.querySelectorAll(`[data-columna="${columna}"]`);
             columnas.forEach(columna => {
@@ -99,6 +100,7 @@
             });
         }
 
+        // Función para enviar los datos seleccionados a la ruta /exportar_excel
         function enviarDatosExcel(event) {
            event.preventDefault();
             const checkboxes = document.querySelectorAll('.options-container input[type="checkbox"]');
