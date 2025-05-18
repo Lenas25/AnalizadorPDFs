@@ -9,6 +9,9 @@ body {
   box-sizing: border-box;
   background-color: #f4f4f4;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 header {
@@ -31,13 +34,14 @@ header h1 {
 }
 
 .container {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 20px auto;
   padding: 20px;
   background: white;
   border-radius: 12px;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
   height: 100%;
+  overflow-y: auto;
 }
 
 h3 {
@@ -139,10 +143,34 @@ footer {
   background-color: #002147;
   color: white;
   text-align: center;
-  margin-top: 40px;
-  position: absolute;
+  margin-top: 70px;
+  position: relative;
   bottom: 0;
   width: 100%;
+  height: auto;
+}
+
+input[type="text"]{
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 40%;
+}
+
+.data-container {
+  flex-wrap: wrap;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+}
+
+.options-container {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  gap: 10px;
 }
 
 @media (max-width: 600px) {
