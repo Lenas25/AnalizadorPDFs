@@ -29,6 +29,7 @@ def extraer_data_pdf(urlarchivo):
     doc = fitz.open(urlarchivo)
     data_extraida_file = {}
     metadata = doc.metadata
+    data_extraida_file["nombre_archivo"] = os.path.basename(urlarchivo)
     data_extraida_file["titulo"] = metadata.get("title", "No detectado")
     data_extraida_file["autores"] = metadata.get("author", "No detectado")
     data_extraida_file["palabras"] = metadata.get("keywords", "No detectado")
@@ -49,6 +50,13 @@ def extraer_data_pdf(urlarchivo):
             contents=f"Resumen este texto en un solo parrafo en español: {texto_resumir}"
         )
         data_extraida_file["resumen"] = respuesta.text
+        
+        respuesta = cliente.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=f"¿De qué país es este texto? Solo dime exactamente el país en ingles {texto_completo}"
+        )
+        data_extraida_file["pais"] = respuesta.text.strip() if respuesta.text else "No detectado"
+        
     except Exception as e:
         data_extraida_file["resumen"] = f"Error al generar resumen: {e}"
 
@@ -56,6 +64,20 @@ def extraer_data_pdf(urlarchivo):
     data_extraida_file["anio"] = deteccion_anio.group(1) if deteccion_anio else "No detectado"
     doc.close()
     return data_extraida_file
+
+@app.route("/estadisticas", methods=["GET", "POST"])
+def estadisticas():
+    if request.method == "GET":
+        return render_template("estadisticas.html")
+    return redirect(url_for("home"))
+
+@app.route("/dataestadistica", methods=["GET"])
+def data_estadistica():
+    global data_extraida
+    
+    return jsonify(
+        data = data_extraida,
+    )
 
 # Ruta para cada vez que se presione el botón de "Buscar" se ejecutará la busqueda entre los PDFs local de la carpeta uploads
 @app.route("/buscar", methods=["POST", "GET"])
@@ -107,17 +129,17 @@ def exportar():
 
     # Filtrar los encabezados basados en las columnas seleccionadas
     encabezado = [col for col in ["Titulo", "Autores", "Anio", "Tema", "Palabras", "Resumen"] if mapeo_columnas[col.lower()] in columnas_seleccionadas]
-    ws.append(headers)
+    ws.append(encabezado)
 
-    header_fill = PatternFill(start_color="002147", end_color="002147", fill_type="solid")
-    header_font = Font(color="FFFFFF", bold=True)
-    thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+    relleno_encabezado = PatternFill(start_color="002147", end_color="002147", fill_type="solid")
+    fuente_encabezado = Font(color="FFFFFF", bold=True)
+    borde = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
 
     for col in range(1, len(encabezado) + 1):
         cell = ws.cell(row=1, column=col)
-        cell.fill = header_fill
-        cell.border = thin_border
-        cell.font = header_font
+        cell.fill = relleno_encabezado
+        cell.border = borde
+        cell.font = fuente_encabezado
         cell.alignment = Alignment(horizontal="center", vertical="center")
 
     for data in data_extraida:
@@ -127,29 +149,18 @@ def exportar():
 
     for row in ws.iter_rows(min_row=2, min_col=1, max_col=len(encabezado)):
         for cell in row:
-            cell.border = thin_border
-            cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
-
-    for col in ws.columns:
-        max_length = 0
-        col_letter = col[0].column_letter
-        for cell in col:
-            try:
-                max_length = max(max_length, len(str(cell.value)))
-            except:
-                pass
-        adjusted_width = (max_length + 4)
-        ws.column_dimensions[col_letter].width = adjusted_width
+            cell.border = borde
+            cell.alignment = Alignment(horizontal="left", vertical="top")
 
     nombrearchivo = "datos.xlsx"
     urlarchivo = os.path.join(app.config['UPLOAD_FOLDER'], nombrearchivo)
     wb.save(urlarchivo)
-    file_url = url_for('download_excel')
+    file_url = url_for('descargar_excel')
     return jsonify(url=file_url)
 
 # Ruta para descargar el archivo Excel generado
-@app.route("/download_excel")
-def download_excel():
+@app.route("/descargar_excel")
+def descargar_excel():
     filename = "datos.xlsx"
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Analizador Semántico RSL</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}" />
+    <link
+      rel="icon"
+      href="{{ url_for('static', filename='assets/logo.png') }}"
+      type="image/png" />
+  </head>
+
+  <body>
+    <header>
+      <img
+        src="{{ url_for('static', filename='assets/logo.png') }}"
+        alt="Logo del sitio" />
+      <h1>Analizador Semántico para RSL</h1>
+    </header>
+    <div class="container">
+      <p>
+        Aqui podras visualizar los gráficos estadísticos de los datos obtenidos
+        de la búsqueda de artículos científicos realizada.
+      </p>
+      <div class="demo">
+        <div class="line"></div>
+        <h3>¡PRUEBA NUESTRA DEMO!</h3>
+        <div class="line"></div>
+      </div>
+
+      <div class="first-chart">
+        <h3>Gráfico de Países</h3>
+        <div id="chart_paises" class="chart-container">
+          <canvas id="geoChart" width="800" height="400"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>&copy; 2025 - Proyecto de RSL | UTP</p>
+    </footer>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/chartjs-chart-geo@3.5.2/build/index.umd.min.js"></script>
+    <script>
+      fetch("/dataestadistica")
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data);
+          countriesData = data.data.map((item) => item.pais);
+
+          const countryCount = countriesData.reduce((acc, pais) => {
+            acc[pais] = (acc[pais] || 0) + 1;
+            return acc;
+          }, {});
+
+          console.log(countryCount);
+
+          fetch("https://unpkg.com/world-atlas@2.0.2/countries-50m.json")
+            .then((res) => res.json())
+            .then((datapoint) => {
+              const countries = ChartGeo.topojson.feature(
+                datapoint,
+                datapoint.objects.countries
+              ).features;
+              let countriesData = [];
+
+              const chartData = countries.map((d) => ({
+                feature: d,
+                value: countryCount[d.properties.name] || 0,
+              }));
+
+              const data = {
+                labels: countries.map((country) => country.properties.name),
+                datasets: [
+                  {
+                    label: "Countries",
+                    data: chartData,
+                    outline: countries,
+                    colorScale: {
+                      quantize: 2,
+                      legend: {
+                        position: "bottom-right",
+                        align: "bottom",
+                      },
+                       interpolate: t => t > 0 ? "#ff5733" : "#e0e0e0"
+                    },
+                  },
+                ],
+              };
+
+              const config = {
+                type: "choropleth",
+                data,
+                options: {
+                  scales: {
+                    xy: {
+                      projection: "equalEarth",
+                    },
+                  },
+                  plugins: {
+                    legend: {
+                      display: false,
+                    },
+                  },
+                },
+              };
+
+              const myChart = new Chart(
+                document.getElementById("geoChart"),
+                config
+              );
+            });
+        });
+    </script>
+  </body>
+</html>

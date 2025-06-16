@@ -173,6 +173,19 @@ input[type="text"]{
   gap: 10px;
 }
 
+.buttons-container{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 50px;
+}
+
+canvas {
+  width: 100% !important; /* Asegura que el canvas ocupe todo el ancho disponible */
+  height: auto !important; /* Mantiene la relación de aspecto */
+  border-radius: 8px; /* Esquinas redondeadas para el canvas */
+}
+
 @media (max-width: 600px) {
   th,
   td {

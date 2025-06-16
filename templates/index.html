@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8" />
     <title>Analizador Semántico RSL</title>
@@ -73,14 +72,25 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="export-container">
-                    <p>¿Quieres exportar los resultados a un archivo Excel?</p>
-                    {% if error %}
-                    <p style="color: red; text-align:center">{{ error }}</p>
-                    {% endif %}
-                    <a href="#" class="export-button" onclick="enviarDatosExcel(event)">
-                        Exportar a Excel
-                    </a>
+                <div class="buttons-container">
+                    <div class="export-container">
+                        <p>¿Quieres exportar los resultados a un archivo Excel?</p>
+                        {% if error %}
+                        <p style="color: red; text-align:center">{{ error }}</p>
+                        {% endif %}
+                        <a href="#" class="export-button" onclick="enviarDatosExcel(event)">
+                            Exportar a Excel
+                        </a>
+                    </div>
+                    <div class="export-container">
+                        <p>¿Quieres conocer más acerca de tus resultados?</p>
+                        {% if error %}
+                        <p style="color: red; text-align:center">{{ error }}</p>
+                        {% endif %}
+                        <a href="/estadisticas" class="export-button">
+                            Ver más detalles
+                        </a>
+                    </div>
                 </div>
                 {% endif %}
             </div>
@@ -151,7 +161,7 @@
                     // Redirigir a la página principal después de un breve retraso
                     setTimeout(() => {
                         window.location.href = "/";
-                    }, 1000);
+                    }, 500);
                 }
             })
             .catch(error => {
@@ -159,6 +169,7 @@
                 alert('Ocurrió un error al intentar exportar los datos.');
             });
         }
+        
 
         // Asegurar que las columnas marcadas estén visibles al cargar la página
         document.addEventListener('DOMContentLoaded', () => {
