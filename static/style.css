@@ -180,6 +180,27 @@ input[type="text"]{
   gap: 50px;
 }
 
+/*Estilos para la sección de gráficos*/
+.first-chart {
+  margin: 2rem 0;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.first-chart:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.chart-container {
+  position: relative;
+  height: 400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
 canvas {
   width: 100% !important; /* Asegura que el canvas ocupe todo el ancho disponible */
   height: auto !important; /* Mantiene la relación de aspecto */
