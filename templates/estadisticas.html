@@ -32,8 +32,21 @@
 
       <div class="first-chart">
         <h3>Gráfico de Países</h3>
+        <div class="chart-actions">
+          <button onclick="exportChart('geoChart', 'mapa-paises')">Exportar Mapa</button>
+        </div>
         <div id="chart_paises" class="chart-container">
           <canvas id="geoChart" width="800" height="400"></canvas>
+        </div>
+      </div>
+
+      <div class="first-chart">
+        <h3>Gráfico por Año</h3>
+        <div class="chart-actions">
+          <button onclick="exportChart('yearChart', 'grafico-anios')">Exportar Gráfico</button>
+        </div>
+        <div id="chart_anio" class="chart-container">
+          <canvas id="yearChart"></canvas>
         </div>
       </div>
     </div>
@@ -48,6 +61,27 @@
       type="text/javascript"
       src="https://unpkg.com/chartjs-chart-geo@3.5.2/build/index.umd.min.js"></script>
     <script>
+      function exportChart(chartId, fileName) {
+        const chart = Chart.getChart(chartId);
+        if (chart) {
+          const link = document.createElement('a');
+          link.download = `${fileName}.png`;
+          link.href = chart.toBase64Image();
+          link.click();
+        }
+      }
+
+      function formatNumber(num) {
+        return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
+      }
+
+      function configureChartResponsive(chart) {
+        function resizeChart() {
+          chart.resize();
+        }
+        window.addEventListener('resize', resizeChart);
+      }
+
       fetch("/dataestadistica")
         .then((res) => res.json())
         .then((data) => {
@@ -60,6 +94,31 @@
           }, {});
 
           console.log(countryCount);
+
+          //Procesamiento de datos para el gráfico de años
+          const yearsData = data.data.map((item) => item.anio);
+          const yearCount = yearsData.reduce((acc, year) => {
+            if (year && year !== "No detectado") {
+              acc[year] = (acc[year] || 0) + 1;
+            }
+            return acc;
+          }, {});
+
+          //Ordenar los años de más reciente a más antiguo
+          const sortedYears = Object.keys(yearCount).sort((a, b) => b - a);
+          const yearLabels = sortedYears;
+          const yearValues = sortedYears.map(year => yearCount[year]);
+          
+          //Calcular porcentajes
+          const totalArticles = yearValues.reduce((a, b) => a + b, 0);
+          const yearPercentages = yearValues.map(value => 
+            ((value / totalArticles) * 100).toFixed(2) + '%'
+          );
+
+          //Crear etiquetas completas (año - cantidad - porcentaje)
+          const fullLabels = yearLabels.map((year, i) => 
+            `${year} - ${yearValues[i]} (${yearPercentages[i]})`
+          );
 
           fetch("https://unpkg.com/world-atlas@2.0.2/countries-50m.json")
             .then((res) => res.json())
@@ -116,6 +175,61 @@
                 config
               );
             });
+            
+          //Gráfico circular por año
+          const yearChartCtx = document.getElementById('yearChart').getContext('2d');
+          
+          const yearChart = new Chart(yearChartCtx, {
+            type: 'doughnut',
+            data: {
+              labels: fullLabels,
+              datasets: [{
+                data: yearValues,
+                backgroundColor: [
+                  '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                  '#FF9F40', '#8AC24A', '#607D8B', '#E91E63', '#00BCD4'
+                ],
+                borderWidth: 1,
+                hoverBackgroundColor: [
+                  '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                  '#FF9F40', '#8AC24A', '#607D8B', '#E91E63', '#00BCD4'
+                ].map(color => color + 'DD'),
+                hoverBorderWidth: 2
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  position: 'right',
+                  labels: {
+                    font: {
+                      size: 12
+                    },
+                    padding: 20
+                  }
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      const label = context.label || '';
+                      const value = context.raw || 0;
+                      const percentage = yearPercentages[context.dataIndex];
+                      return `${label}: ${value} artículos (${percentage})`;
+                    }
+                  }
+                }
+              },
+              cutout: '50%',
+              animation: {
+                animateScale: true,
+                animateRotate: true
+              }
+            }
+          });
+          
+          configureChartResponsive(yearChart);
         });
     </script>
   </body>
