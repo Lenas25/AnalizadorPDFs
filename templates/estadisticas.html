@@ -52,8 +52,10 @@
         .then((res) => res.json())
         .then((data) => {
           console.log(data);
+          // Extraer los datos de países
           countriesData = data.data.map((item) => item.pais);
 
+          // Contar la cantidad de veces que aparece cada país
           const countryCount = countriesData.reduce((acc, pais) => {
             acc[pais] = (acc[pais] || 0) + 1;
             return acc;
@@ -61,20 +63,24 @@
 
           console.log(countryCount);
 
+          // Cargar el mapa del mundo con Chart.js Geo
           fetch("https://unpkg.com/world-atlas@2.0.2/countries-50m.json")
             .then((res) => res.json())
             .then((datapoint) => {
+              // Convertir el TopoJSON a GeoJSON
               const countries = ChartGeo.topojson.feature(
                 datapoint,
                 datapoint.objects.countries
               ).features;
               let countriesData = [];
 
+              // Filtrar los países que están en el conteo
               const chartData = countries.map((d) => ({
                 feature: d,
                 value: countryCount[d.properties.name] || 0,
               }));
 
+              // Crear el gráfico con propiedades especiales de la libreria
               const data = {
                 labels: countries.map((country) => country.properties.name),
                 datasets: [
@@ -111,6 +117,7 @@
                 },
               };
 
+              // Crear el gráfico referenciando el canvas con el id "geoChart"
               const myChart = new Chart(
                 document.getElementById("geoChart"),
                 config

@@ -51,6 +51,7 @@ def extraer_data_pdf(urlarchivo):
         )
         data_extraida_file["resumen"] = respuesta.text
         
+        # Generar la detección del país usando la API de Gemini
         respuesta = cliente.models.generate_content(
             model="gemini-2.0-flash",
             contents=f"¿De qué país es este texto? Solo dime exactamente el país en ingles {texto_completo}"
@@ -65,12 +66,15 @@ def extraer_data_pdf(urlarchivo):
     doc.close()
     return data_extraida_file
 
+# Ruta para renderizar la página de estadísticas
 @app.route("/estadisticas", methods=["GET", "POST"])
 def estadisticas():
     if request.method == "GET":
         return render_template("estadisticas.html")
     return redirect(url_for("home"))
 
+
+# Ruta para obtener los datos estadísticos extraídos de los PDFs
 @app.route("/dataestadistica", methods=["GET"])
 def data_estadistica():
     global data_extraida
