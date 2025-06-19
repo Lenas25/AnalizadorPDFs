@@ -53,6 +53,8 @@
       </div>
     </div>
 
+    <a href="/" class="export-button"> Volver </a>
+
     <footer>
       <p>&copy; 2025 - Proyecto de RSL | UTP</p>
     </footer>
@@ -63,6 +65,7 @@
       type="text/javascript"
       src="https://unpkg.com/chartjs-chart-geo@3.5.2/build/index.umd.min.js"></script>
     <script>
+      // Funcion para descargar una imagen del gráfico completo
       function exportChart(chartId, fileName) {
         const chart = Chart.getChart(chartId);
         if (chart) {
@@ -73,10 +76,12 @@
         }
       }
 
+      // Funcion para formatear números con comas
       function formatNumber(num) {
         return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
       }
 
+      // Funcion que escucha el evento de redimensionamiento del gráfico
       function configureChartResponsive(chart) {
         function resizeChart() {
           chart.resize();
@@ -84,20 +89,20 @@
         window.addEventListener("resize", resizeChart);
       }
 
+      // Inicializa la llamada a la API para obtener los datos de la busqueda bibliografica realizada
       fetch("/dataestadistica")
         .then((res) => res.json())
         .then((data) => {
-          console.log(data);
           // Extraer los datos de países
-          countriesData = data.data.map((item) => item.pais);
+          paisesData = data.data.map((item) => item.pais);
+
+          console.log(paisesData);
 
           // Contar la cantidad de veces que aparece cada país
-          const countryCount = countriesData.reduce((acc, pais) => {
+          const paisesCuenta = paisesData.reduce((acc, pais) => {
             acc[pais] = (acc[pais] || 0) + 1;
             return acc;
           }, {});
-
-          console.log(countryCount);
 
           //Procesamiento de datos para el gráfico de años
           const yearsData = data.data.map((item) => item.anio);
@@ -109,51 +114,52 @@
           }, {});
 
           //Ordenar los años de más reciente a más antiguo
-          const sortedYears = Object.keys(yearCount).sort((a, b) => b - a);
-          const yearLabels = sortedYears;
-          const yearValues = sortedYears.map((year) => yearCount[year]);
+          const aniosOrdenados = Object.keys(yearCount).sort((a, b) => b - a);
+          const aniosLabel = aniosOrdenados;
+          const aniosValor = aniosOrdenados.map((year) => yearCount[year]);
 
           //Calcular porcentajes
-          const totalArticles = yearValues.reduce((a, b) => a + b, 0);
-          const yearPercentages = yearValues.map(
-            (value) => ((value / totalArticles) * 100).toFixed(2) + "%"
+          const articulosTotal = aniosValor.reduce((a, b) => a + b, 0);
+          const porcentajeAnios = aniosValor.map(
+            (value) => ((value / articulosTotal) * 100).toFixed(2) + "%"
           );
 
           //Crear etiquetas completas (año - cantidad - porcentaje)
-          const fullLabels = yearLabels.map(
-            (year, i) => `${year} - ${yearValues[i]} (${yearPercentages[i]})`
+          const fullLabels = aniosLabel.map(
+            (year, i) => `${year} - ${aniosValor[i]} (${porcentajeAnios[i]})`
           );
 
           fetch("https://unpkg.com/world-atlas@2.0.2/countries-50m.json")
             .then((res) => res.json())
             .then((datapoint) => {
               // Convertir el TopoJSON a GeoJSON
-              const countries = ChartGeo.topojson.feature(
+              const paises = ChartGeo.topojson.feature(
                 datapoint,
                 datapoint.objects.countries
               ).features;
-              let countriesData = [];
+
+              console.log(paises.map((d) => d.properties.name));
 
               // Filtrar los países que están en el conteo
-              const chartData = countries.map((d) => ({
+              const dataGrafico = paises.map((d) => ({
                 feature: d,
-                value: countryCount[d.properties.name] || 0,
+                value: paisesCuenta[d.properties.name] || 0,
               }));
 
-              const backgroundColors = countries.map(d =>
-                countryCount[d.properties.name] > 0 ? "#002147" : "#e0e0e0"
+              const backgroundColors = paises.map((d) =>
+                paisesCuenta[d.properties.name] > 0 ? "#002147" : "#e0e0e0"
               );
 
               // Crear el gráfico con propiedades especiales de la libreria
               const config = {
                 type: "choropleth",
                 data: {
-                  labels: countries.map((country) => country.properties.name),
+                  labels: paises.map((country) => country.properties.name),
                   datasets: [
                     {
-                      label: "Countries",
-                      data: chartData,
-                      outline: countries,
+                      label: "Paises",
+                      data: dataGrafico,
+                      outline: paises,
                       backgroundColor: backgroundColors,
                     },
                   ],
@@ -171,12 +177,14 @@
                   },
                 },
               };
-              console.log(config);
+
               // Crear el gráfico referenciando el canvas con el id "geoChart"
-              const myChart = new Chart(
+              const geoChart = new Chart(
                 document.getElementById("geoChart"),
                 config
               );
+
+              configureChartResponsive(geoChart);
             });
 
           //Gráfico circular por año
@@ -190,7 +198,7 @@
               labels: fullLabels,
               datasets: [
                 {
-                  data: yearValues,
+                  data: aniosValor,
                   backgroundColor: [
                     "#FF6384",
                     "#36A2EB",
@@ -238,7 +246,7 @@
                     label: function (context) {
                       const label = context.label || "";
                       const value = context.raw || 0;
-                      const percentage = yearPercentages[context.dataIndex];
+                      const percentage = porcentajeAnios[context.dataIndex];
                       return `${label}: ${value} artículos (${percentage})`;
                     },
                   },

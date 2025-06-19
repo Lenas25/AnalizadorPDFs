@@ -78,7 +78,7 @@ def estadisticas():
 @app.route("/dataestadistica", methods=["GET"])
 def data_estadistica():
     global data_extraida
-    
+    print("Datos extraídos:", data_extraida)
     return jsonify(
         data = data_extraida,
     )
