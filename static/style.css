@@ -64,7 +64,7 @@ h3 {
 }
 
 form {
-  margin-bottom: 30px;
+  margin: 20px auto;
 }
 
 form div {
@@ -75,6 +75,10 @@ form div {
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+label{
+  text-align: center;
 }
 
 input[type="file"] {
