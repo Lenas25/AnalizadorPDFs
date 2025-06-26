@@ -27,14 +27,18 @@ def extraer_data_pdf(urlarchivo):
     """Extrae metadatos y texto del PDF, y genera un resumen con IA."""
     urlarchivo = os.path.abspath(urlarchivo)
     doc = fitz.open(urlarchivo)
+    paginas_count  = doc.page_count
+    imagenes_count = sum(len(page.get_images()) for page in doc)
     data_extraida_file = {}
+    data_extraida_file["pais"] = ""
+    data_extraida_file["paginas_imagenes"] = f"{paginas_count} / {imagenes_count}"
     metadata = doc.metadata
     data_extraida_file["nombre_archivo"] = os.path.basename(urlarchivo)
     data_extraida_file["titulo"] = metadata.get("title", "No detectado")
-    data_extraida_file["autores"] = metadata.get("author", "No detectado")
+    data_extraida_file["autores"] = metadata.get("author", "No detectado")  
     data_extraida_file["palabras"] = metadata.get("keywords", "No detectado")
     data_extraida_file["tema"] = metadata.get("subject", "No detectado")
-    
+    data_extraida_file["paginas_imagenes"]  = f"{paginas_count} / {imagenes_count}"
     texto_completo = ""  # Variable para almacenar todo el texto del PDF
     for page_num in range(len(doc)):  # Itera sobre todas las páginas
         texto_completo += doc[page_num].get_text()
@@ -127,12 +131,15 @@ def exportar():
         "autores": "autores",
         "anio": "anio",
         "tema": "tema",
+        "pais": "pais", 
         "palabras": "palabras",
-        "resumen": "resumen",
+        "paginas_imagenes":  "paginas_imagenes",
+        "resumen": "resumen"
+        
     }
 
     # Filtrar los encabezados basados en las columnas seleccionadas
-    encabezado = [col for col in ["Titulo", "Autores", "Anio", "Tema", "Palabras", "Resumen"] if mapeo_columnas[col.lower()] in columnas_seleccionadas]
+    encabezado = [col for col in ["Titulo", "Autores", "Anio", "Tema","Pais", "Palabras","Paginas_Imagenes", "Resumen"] if mapeo_columnas[col.lower()] in columnas_seleccionadas]
     ws.append(encabezado)
 
     relleno_encabezado = PatternFill(start_color="002147", end_color="002147", fill_type="solid")
