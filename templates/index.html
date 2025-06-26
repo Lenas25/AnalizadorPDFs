@@ -30,23 +30,6 @@
         <h3>¡PRUEBA NUESTRA DEMO!</h3>
         <div class="line"></div>
       </div>
-      <form action="/extract" method="POST" enctype="multipart/form-data">
-        <div>
-          <label for="pdf"><strong>Seleccionar PDF:</strong></label>
-        </div>
-        <div>
-          <input type="file" id="pdf" name="pdf" required multiple />
-          <button type="submit">Extraer Datos</button>
-        </div>
-        {% if error %}
-        <p style="color: red; text-align: center">{{ error }}</p>
-        {% endif %}
-      </form>
-      <div class="demo">
-        <div class="line"></div>
-        <h3>O</h3>
-        <div class="line"></div>
-      </div>
       <form method="POST" action="/buscar">
         <div>
           <input type="text" name="buscar_tema" placeholder="Buscar por tema" />
@@ -82,9 +65,22 @@
             <label
               ><input
                 type="checkbox"
+                name="pais"
+                onchange="toggleColumna(this, 'pais')" />País</label
+            >
+            <label
+              ><input
+                type="checkbox"
                 name="palabras"
                 onchange="toggleColumna(this, 'palabras')" />Palabras
               Claves</label
+            >
+            <label
+              ><input
+                type="checkbox"
+                name="paginas_imagenes"
+                onchange="toggleColumna(this, 'paginas_imagenes')" />Páginas /
+              Imágenes</label
             >
             <label
               ><input
@@ -104,7 +100,9 @@
                   <th data-columna="autores">Autores</th>
                   <th data-columna="anio">Año</th>
                   <th data-columna="tema">Tema</th>
+                  <th data-columna="pais">País</th>
                   <th data-columna="palabras">Palabras Claves</th>
+                  <th data-columna="paginas_imagenes">Páginas / Imágenes</th>
                   <th data-columna="resumen">Resumen</th>
                 </tr>
               </thead>
@@ -115,7 +113,11 @@
                   <td data-columna="autores">{{ data["autores"] }}</td>
                   <td data-columna="anio">{{ data["anio"] }}</td>
                   <td data-columna="tema">{{ data["tema"] }}</td>
+                  <td data-columna="pais">{{ data["pais"] }}</td>
                   <td data-columna="palabras">{{ data["palabras"] }}</td>
+                  <td data-columna="paginas_imagenes" style="display: none">
+                    {{ data['paginas_imagenes'] }}
+                  </td>
                   <td data-columna="resumen">{{ data["resumen"] }}</td>
                 </tr>
                 {% endfor %}

@@ -15,10 +15,12 @@ def extraer_data_pdf(urlarchivo):
 
     # Abrir el PDF usando PyMuPDF
     doc = fitz.open(urlarchivo)
-
+    paginas_count  = doc.page_count
+    
     # Diccionario donde se almacenará la información extraída
     data = {}
 
+    imagenes_count = sum(len(page.get_images()) for page in doc)
     # Extraer metadatos del documento
     metadata = doc.metadata
     data["nombre_archivo"] = os.path.basename(urlarchivo)
@@ -26,6 +28,7 @@ def extraer_data_pdf(urlarchivo):
     data["autores"] = metadata.get("author", "No detectado")
     data["palabras"] = metadata.get("keywords", "No detectado")
     data["tema"] = metadata.get("subject", "No detectado")
+    data["paginas_imagenes"]  = f"{paginas_count} / {imagenes_count}"
 
     # Obtener el texto completo de todas las páginas del PDF
     texto = "".join([page.get_text() for page in doc])
