@@ -30,6 +30,23 @@
         <h3>¡PRUEBA NUESTRA DEMO!</h3>
         <div class="line"></div>
       </div>
+      <form action="/extract" method="POST" enctype="multipart/form-data">
+        <div>
+          <label for="pdf"><strong>Seleccionar PDF:</strong></label>
+        </div>
+        <div>
+          <input type="file" id="pdf" name="pdf" required multiple />
+          <button type="submit">Extraer Datos</button>
+        </div>
+        {% if error %}
+        <p style="color: red; text-align: center">{{ error }}</p>
+        {% endif %}
+      </form>
+      <div class="demo">
+        <div class="line"></div>
+        <h3>O</h3>
+        <div class="line"></div>
+      </div>
       <form method="POST" action="/buscar">
         <div>
           <input type="text" name="buscar_tema" placeholder="Buscar por tema" />
@@ -39,7 +56,6 @@
         <p style="color: red; text-align: center">{{ error }}</p>
         {% endif %}
       </form>
-
       <div class="data-container">
         <div>
           <h3>Selecciona las columnas a mostrar:</h3>
