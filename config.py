@@ -10,6 +10,7 @@ class Config:
     # Carpeta donde se almacenarán los archivos subidos (PDFs y Excel)
     UPLOAD_FOLDER = 'uploads'
 
+
     # Clave API para el uso del modelo Gemini AI, obtenida desde el archivo .env
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 

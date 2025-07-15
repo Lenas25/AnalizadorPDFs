@@ -1,5 +1,5 @@
 # Importar librerías necesarias
-import fitz                      # PyMuPDF para leer PDFs
+import fitz as pymupdf     # PyMuPDF para leer PDFs
 import os                       # Para manipulación de archivos y rutas
 import re                       # Para expresiones regulares (detección de año)
 from google import genai        # Cliente de Gemini AI
@@ -14,9 +14,9 @@ def extraer_data_pdf(urlarchivo):
     urlarchivo = os.path.abspath(urlarchivo)
 
     # Abrir el PDF usando PyMuPDF
-    doc = fitz.open(urlarchivo)
+    doc = pymupdf.open(urlarchivo)
     paginas_count  = doc.page_count
-    
+
     # Diccionario donde se almacenará la información extraída
     data = {}
 
@@ -24,10 +24,10 @@ def extraer_data_pdf(urlarchivo):
     # Extraer metadatos del documento
     metadata = doc.metadata
     data["nombre_archivo"] = os.path.basename(urlarchivo)
-    data["titulo"] = metadata.get("title", "No detectado")
-    data["autores"] = metadata.get("author", "No detectado")
-    data["palabras"] = metadata.get("keywords", "No detectado")
-    data["tema"] = metadata.get("subject", "No detectado")
+    data["titulo"] = metadata.get("title", "N/A")
+    data["autores"] = metadata.get("author", "N/A")
+    data["palabras"] = metadata.get("keywords", "N/A")
+    data["tema"] = metadata.get("subject", "N/A")
     data["paginas_imagenes"]  = f"{paginas_count} / {imagenes_count}"
 
     # Obtener el texto completo de todas las páginas del PDF
@@ -54,15 +54,16 @@ def extraer_data_pdf(urlarchivo):
             model="gemini-2.0-flash",
             contents=f"¿De qué país es este texto? Solo dime el país en inglés: {texto}"
         )
-        data["pais"] = pais.text.strip() if pais.text else "No detectado"
+        data["pais"] = pais.text.strip() if pais.text == "" else "N/A"
 
     except Exception as e:
         # Si ocurre un error con la API, registrar el mensaje de error en el campo resumen
-        data["resumen"] = f"Error: {e}"
+        data["resumen"] = "N/A"
+        data["pais"] = "N/A"
 
     # Buscar un año en formato 20XX en el texto completo (usando regex)
     anio = re.search(r'\b(20[0-3][0-9])\b', texto)
-    data["anio"] = anio.group(1) if anio else "No detectado"
+    data["anio"] = anio.group(1) if anio else "N/A"
 
     # Retornar el diccionario con todos los datos extraídos
     return data

@@ -1,259 +1,224 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Analizador Semántico RSL</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}" />
-    <link
-      rel="icon"
-      href="{{ url_for('static', filename='assets/logo.png') }}"
-      type="image/png" />
-  </head>
-
-  <body>
-    <header>
-      <img
-        src="{{ url_for('static', filename='assets/logo.png') }}"
-        alt="Logo del sitio" />
-      <h1>Analizador Semántico para RSL</h1>
-    </header>
-    <div class="container">
-      <p>
-        Esta aplicación nos permite analizar un artículo científico en formato
-        PDF y retornar datos específicos de suma utilidad para estudiantes o
-        investigadores.
-      </p>
-      <div class="demo">
-        <div class="line"></div>
-        <h3>¡PRUEBA NUESTRA DEMO!</h3>
-        <div class="line"></div>
-      </div>
-      <form action="/extract" method="POST" enctype="multipart/form-data">
-        <div>
-          <label for="pdf"><strong>Seleccionar PDF:</strong></label>
-        </div>
-        <div>
-          <input type="file" id="pdf" name="pdf" required multiple />
-          <button type="submit">Extraer Datos</button>
-        </div>
-        {% if error %}
-        <p style="color: red; text-align: center">{{ error }}</p>
-        {% endif %}
-      </form>
-      <div class="demo">
-        <div class="line"></div>
-        <h3>O</h3>
-        <div class="line"></div>
-      </div>
-      <form method="POST" action="/buscar">
-        <div>
-          <input type="text" name="buscar_tema" placeholder="Buscar por tema" />
-          <button type="submit">Buscar</button>
-        </div>
-        {% if error %}
-        <p style="color: red; text-align: center">{{ error }}</p>
-        {% endif %}
-      </form>
-      <div class="data-container">
-        <div>
-          <h3>Selecciona las columnas a mostrar:</h3>
-          <div class="options-container">
-            <label
-              ><input
-                type="checkbox"
-                name="autores"
-                onchange="toggleColumna(this, 'autores')" />Autores</label
-            >
-            <label
-              ><input
-                type="checkbox"
-                name="anio"
-                onchange="toggleColumna(this, 'anio')" />Año</label
-            >
-            <label
-              ><input
-                type="checkbox"
-                name="tema"
-                onchange="toggleColumna(this, 'tema')" />Tema</label
-            >
-            <label
-              ><input
-                type="checkbox"
-                name="pais"
-                onchange="toggleColumna(this, 'pais')" />País</label
-            >
-            <label
-              ><input
-                type="checkbox"
-                name="palabras"
-                onchange="toggleColumna(this, 'palabras')" />Palabras
-              Claves</label
-            >
-            <label
-              ><input
-                type="checkbox"
-                name="paginas_imagenes"
-                onchange="toggleColumna(this, 'paginas_imagenes')" />Páginas /
-              Imágenes</label
-            >
-            <label
-              ><input
-                type="checkbox"
-                name="resumen"
-                onchange="toggleColumna(this, 'resumen')" />Resumen</label
-            >
-          </div>
-        </div>
-        <div>
-          {% if data_list %}
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Título</th>
-                  <th data-columna="autores">Autores</th>
-                  <th data-columna="anio">Año</th>
-                  <th data-columna="tema">Tema</th>
-                  <th data-columna="pais">País</th>
-                  <th data-columna="palabras">Palabras Claves</th>
-                  <th data-columna="paginas_imagenes">Páginas / Imágenes</th>
-                  <th data-columna="resumen">Resumen</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for data in data_list %}
-                <tr>
-                  <td data-columna="titulo">{{ data["titulo"] }}</td>
-                  <td data-columna="autores">{{ data["autores"] }}</td>
-                  <td data-columna="anio">{{ data["anio"] }}</td>
-                  <td data-columna="tema">{{ data["tema"] }}</td>
-                  <td data-columna="pais">{{ data["pais"] }}</td>
-                  <td data-columna="palabras">{{ data["palabras"] }}</td>
-                  <td data-columna="paginas_imagenes" style="display: none">
-                    {{ data['paginas_imagenes'] }}
-                  </td>
-                  <td data-columna="resumen">{{ data["resumen"] }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          <div class="buttons-container">
-            <div class="export-container">
-              <p>¿Quieres exportar los resultados a un archivo Excel?</p>
-              {% if error %}
-              <p style="color: red; text-align: center">{{ error }}</p>
-              {% endif %}
-              <a
-                href="#"
-                class="export-button"
-                onclick="enviarDatosExcel(event)">
-                Exportar a Excel
-              </a>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Analizador Semántico RSL</title>
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/icon?family=Material+Icons"
+        />
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='style.css') }}"
+        />
+        <link
+            rel="icon"
+            href="{{ url_for('static', filename='assets/logo.png') }}"
+            type="image/png"
+        />
+    </head>
+    <body>
+        <header>
+            <img
+                src="{{ url_for('static', filename='assets/logo.png') }}"
+                alt="Logo del sitio"
+            />
+            <h1>Analizador Semántico para RSL</h1>
+            <p class="intro-text">
+                Analiza artículos científicos en PDF para extraer datos útiles
+                para estudiantes e investigadores.
+            </p>
+        </header>
+        <div class="container">
+            <div id="files-list">
+                <h3>Archivos Subidos</h3>
+                <div id="file-upload-area">
+                    <input
+                        type="file"
+                        id="file-input"
+                        accept=".pdf"
+                        style="display: none"
+                    />
+                    <button type="button" id="upload-btn" class="btn">
+                        Seleccionar Archivo PDF
+                    </button>
+                    <div id="upload-status"></div>
+                </div>
+                <ul id="files-container">
+                    <!-- Los archivos se mostrarán aquí dinámicamente -->
+                </ul>
+                <form id="extract-form" class="form-section">
+                    <button type="submit" class="btn" id="extract-btn">
+                        Extraer Datos
+                    </button>
+                </form>
             </div>
-            <div class="export-container">
-              <p>¿Quieres conocer más acerca de tus resultados?</p>
-              {% if error %}
-              <p style="color: red; text-align: center">{{ error }}</p>
-              {% endif %}
-              <a href="/estadisticas" class="export-button">
-                Ver más detalles
-              </a>
+            <div>
+                <div class="demo">
+                    <div class="line"></div>
+                    <h3>O</h3>
+                    <div class="line"></div>
+                </div>
+
+                <form method="POST" action="/buscar" class="form-section">
+                    <div>
+                        <input
+                            type="text"
+                            name="buscar_tema"
+                            placeholder="Buscar por tema"
+                        />
+                        <button type="submit" class="btn">Buscar</button>
+                    </div>
+
+                    {% if error %}
+                    <p class="error-message" style="margin-top: 20px">
+                        {{ error }}
+                    </p>
+                    {% endif %}
+                </form>
+
+                <div class="data-container">
+                    {% if data_list %}
+                    <div class="options-container">
+                        <h3>Selecciona las columnas a mostrar:</h3>
+                        <div>
+                            <label
+                                ><input
+                                    type="checkbox"
+                                    name="autores"
+                                    onchange="toggleColumna(this, 'autores')"
+                                />Autores</label
+                            >
+                            <label
+                                ><input
+                                    type="checkbox"
+                                    name="anio"
+                                    onchange="toggleColumna(this, 'anio')"
+                                />Año</label
+                            >
+                            <label
+                                ><input
+                                    type="checkbox"
+                                    name="tema"
+                                    onchange="toggleColumna(this, 'tema')"
+                                />Tema</label
+                            >
+                            <label
+                                ><input
+                                    type="checkbox"
+                                    name="pais"
+                                    onchange="toggleColumna(this, 'pais')"
+                                />País</label
+                            >
+                            <label
+                                ><input
+                                    type="checkbox"
+                                    name="palabras"
+                                    onchange="toggleColumna(this, 'palabras')"
+                                />Palabras Claves</label
+                            >
+                            <label
+                                ><input
+                                    type="checkbox"
+                                    name="paginas_imagenes"
+                                    onchange="toggleColumna(this, 'paginas_imagenes')"
+                                />Páginas / Imágenes</label
+                            >
+                            <label
+                                ><input
+                                    type="checkbox"
+                                    name="resumen"
+                                    onchange="toggleColumna(this, 'resumen')"
+                                />Resumen</label
+                            >
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="mui-table">
+                            <thead>
+                                <tr>
+                                    <th>Título</th>
+                                    <th data-columna="autores">Autores</th>
+                                    <th data-columna="anio">Año</th>
+                                    <th data-columna="tema">Tema</th>
+                                    <th data-columna="pais">País</th>
+                                    <th data-columna="palabras">
+                                        Palabras Claves
+                                    </th>
+                                    <th
+                                        data-columna="paginas_imagenes"
+                                        style="display: none"
+                                    >
+                                        Páginas / Imágenes
+                                    </th>
+                                    <th data-columna="resumen">Resumen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in data_list %}
+                                <tr>
+                                    <td data-columna="titulo">
+                                        {{ data["titulo"] }}
+                                    </td>
+                                    <td data-columna="autores">
+                                        {{ data["autores"] }}
+                                    </td>
+                                    <td data-columna="anio">
+                                        {{ data["anio"] }}
+                                    </td>
+                                    <td data-columna="tema">
+                                        {{ data["tema"] }}
+                                    </td>
+                                    <td data-columna="pais">
+                                        {{ data["pais"] }}
+                                    </td>
+                                    <td data-columna="palabras">
+                                        {{ data["palabras"] }}
+                                    </td>
+                                    <td
+                                        data-columna="paginas_imagenes"
+                                        style="display: none"
+                                    >
+                                        {{ data['paginas_imagenes'] }}
+                                    </td>
+                                    <td data-columna="resumen">
+                                        {{ data["resumen"] }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="buttons-container">
+                        <div class="export-container">
+                            <p>
+                                ¿Quieres exportar los resultados a un archivo
+                                Excel?
+                            </p>
+                            <a
+                                href="#"
+                                class="btn"
+                                onclick="enviarDatosExcel(event)"
+                                >Exportar a Excel</a
+                            >
+                        </div>
+                        <div class="export-container">
+                            <p>
+                                ¿Quieres conocer más acerca de tus resultados?
+                            </p>
+                            <a href="/estadisticas" class="btn"
+                                >Ver más detalles</a
+                            >
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-          </div>
-          {% endif %}
         </div>
-      </div>
-    </div>
 
-    <footer>
-      <p>&copy; 2025 - Proyecto de RSL | UTP</p>
-    </footer>
-
-    <script>
-      // Función para alternar la visibilidad de las columnas según el checkbox
-      function toggleColumna(checkbox, columna) {
-        const columnas = document.querySelectorAll(
-          `[data-columna="${columna}"]`
-        );
-        columnas.forEach((columna) => {
-          columna.style.display = checkbox.checked ? "table-cell" : "none";
-        });
-      }
-
-      // Función para enviar los datos seleccionados a la ruta /exportar_excel
-      function enviarDatosExcel(event) {
-        event.preventDefault();
-        const checkboxes = document.querySelectorAll(
-          '.options-container input[type="checkbox"]'
-        );
-        const columnasSeleccionadas = Array.from(checkboxes)
-          .filter((checkbox) => checkbox.checked)
-          .map((checkbox) => checkbox.name);
-
-        columnasSeleccionadas.push("titulo"); // Siempre incluir la columna de título
-
-        if (columnasSeleccionadas.length === 0) {
-          alert("Por favor, selecciona al menos una columna para exportar.");
-          return;
-        }
-
-        const form = document.createElement("form");
-        form.method = "POST";
-        form.action = "/exportar_excel";
-
-        columnasSeleccionadas.forEach((columna) => {
-          const input = document.createElement("input");
-          input.type = "hidden";
-          input.name = "columnas";
-          input.value = columna;
-          form.appendChild(input);
-        });
-
-        document.body.appendChild(form);
-        console.log("Columnas seleccionadas:", columnasSeleccionadas);
-        console.log("Formulario creado:", form);
-        // Usar fetch para enviar la solicitud POST y manejar la respuesta
-        fetch("/exportar_excel", {
-          method: "POST",
-          body: new FormData(form),
-        })
-          .then((response) => response.json()) // Esperar una respuesta JSON
-          .then((data) => {
-            if (data.error) {
-              alert(data.error);
-            } else if (data.url) {
-              // Descargar el archivo
-              const a = document.createElement("a");
-              a.href = data.url;
-              a.download = "datos.xlsx";
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-
-              // Redirigir a la página principal después de un breve retraso
-              setTimeout(() => {
-                window.location.href = "/";
-              }, 500);
-            }
-          })
-          .catch((error) => {
-            console.error("Error:", error);
-            alert("Ocurrió un error al intentar exportar los datos.");
-          });
-      }
-
-      // Asegurar que las columnas marcadas estén visibles al cargar la página
-      document.addEventListener("DOMContentLoaded", () => {
-        const checkboxes = document.querySelectorAll(
-          '.options-container input[type="checkbox"]'
-        );
-        checkboxes.forEach((checkbox) => {
-          toggleColumna(checkbox, checkbox.name);
-        });
-      });
-    </script>
-  </body>
+        <script src="{{ url_for('static', filename='script.js') }}"></script>
+        <script src="{{ url_for('static', filename='file-manager.js') }}"></script>
+    </body>
 </html>

@@ -1,267 +1,280 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Analizador Semántico RSL</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}" />
-    <link
-      rel="icon"
-      href="{{ url_for('static', filename='assets/logo.png') }}"
-      type="image/png" />
-  </head>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Analizador Semántico RSL</title>
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='style.css') }}"
+        />
+        <link
+            rel="icon"
+            href="{{ url_for('static', filename='assets/logo.png') }}"
+            type="image/png"
+        />
+    </head>
 
-  <body>
-    <header>
-      <img
-        src="{{ url_for('static', filename='assets/logo.png') }}"
-        alt="Logo del sitio" />
-      <h1>Analizador Semántico para RSL</h1>
-    </header>
-    <div class="container">
-      <p>
-        Aqui podras visualizar los gráficos estadísticos de los datos obtenidos
-        de la búsqueda de artículos científicos realizada.
-      </p>
-      <div class="demo">
-        <div class="line"></div>
-        <h3>¡PRUEBA NUESTRA DEMO!</h3>
-        <div class="line"></div>
-      </div>
+    <body>
+        <a href="/" class="export-button home"> Volver </a>
+        <header>
+            <img
+                src="{{ url_for('static', filename='assets/logo.png') }}"
+                alt="Logo del sitio"
+            />
+            <h1>Analizador Semántico para RSL</h1>
+            <p>
+                Aqui podras visualizar los gráficos estadísticos de los datos
+                obtenidos de la búsqueda de artículos científicos realizada.
+            </p>
+        </header>
+        <div class="chart-container">
+            <div class="first-chart">
+                <h3>Gráfico de Países</h3>
+                <div class="chart-actions">
+                    <button onclick="exportChart('geoChart', 'mapa-paises')">
+                        Exportar Mapa
+                    </button>
+                </div>
+                <canvas id="geoChart"></canvas>
+            </div>
 
-      <div class="first-chart">
-        <h3>Gráfico de Países</h3>
-        <div class="chart-actions">
-          <button onclick="exportChart('geoChart', 'mapa-paises')">
-            Exportar Mapa
-          </button>
+            <div class="first-chart">
+                <h3>Gráfico por Año</h3>
+                <div class="chart-actions">
+                    <button onclick="exportChart('yearChart', 'grafico-anios')">
+                        Exportar Gráfico
+                    </button>
+                </div>
+                <div id="chart_anio" class="chart-container">
+                    <canvas id="yearChart"></canvas>
+                </div>
+            </div>
         </div>
-        <canvas id="geoChart"></canvas>
-      </div>
 
-      <div class="first-chart">
-        <h3>Gráfico por Año</h3>
-        <div class="chart-actions">
-          <button onclick="exportChart('yearChart', 'grafico-anios')">
-            Exportar Gráfico
-          </button>
-        </div>
-        <div id="chart_anio" class="chart-container">
-          <canvas id="yearChart"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <a href="/" class="export-button"> Volver </a>
-
-    <footer>
-      <p>&copy; 2025 - Proyecto de RSL | UTP</p>
-    </footer>
-    <script
-      type="text/javascript"
-      src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script
-      type="text/javascript"
-      src="https://unpkg.com/chartjs-chart-geo@3.5.2/build/index.umd.min.js"></script>
-    <script>
-      // Funcion para descargar una imagen del gráfico completo
-      function exportChart(chartId, fileName) {
-        const chart = Chart.getChart(chartId);
-        if (chart) {
-          const link = document.createElement("a");
-          link.download = `${fileName}.png`;
-          link.href = chart.toBase64Image();
-          link.click();
-        }
-      }
-
-      // Funcion para formatear números con comas
-      function formatNumber(num) {
-        return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
-      }
-
-      // Funcion que escucha el evento de redimensionamiento del gráfico
-      function configureChartResponsive(chart) {
-        function resizeChart() {
-          chart.resize();
-        }
-        window.addEventListener("resize", resizeChart);
-      }
-
-      // Inicializa la llamada a la API para obtener los datos de la busqueda bibliografica realizada
-      fetch("/dataestadistica")
-        .then((res) => res.json())
-        .then((data) => {
-          // Extraer los datos de países
-          paisesData = data.data.map((item) => item.pais);
-
-          console.log(paisesData);
-
-          // Contar la cantidad de veces que aparece cada país
-          const paisesCuenta = paisesData.reduce((acc, pais) => {
-            acc[pais] = (acc[pais] || 0) + 1;
-            return acc;
-          }, {});
-
-          //Procesamiento de datos para el gráfico de años
-          const yearsData = data.data.map((item) => item.anio);
-          const yearCount = yearsData.reduce((acc, year) => {
-            if (year && year !== "No detectado") {
-              acc[year] = (acc[year] || 0) + 1;
+        <script
+            type="text/javascript"
+            src="https://cdn.jsdelivr.net/npm/chart.js"
+        ></script>
+        <script
+            type="text/javascript"
+            src="https://unpkg.com/chartjs-chart-geo@3.5.2/build/index.umd.min.js"
+        ></script>
+        <script>
+            // Funcion para descargar una imagen del gráfico completo
+            function exportChart(chartId, fileName) {
+                const chart = Chart.getChart(chartId);
+                if (chart) {
+                    const link = document.createElement("a");
+                    link.download = `${fileName}.png`;
+                    link.href = chart.toBase64Image();
+                    link.click();
+                }
             }
-            return acc;
-          }, {});
 
-          //Ordenar los años de más reciente a más antiguo
-          const aniosOrdenados = Object.keys(yearCount).sort((a, b) => b - a);
-          const aniosLabel = aniosOrdenados;
-          const aniosValor = aniosOrdenados.map((year) => yearCount[year]);
+            // Funcion para formatear números con comas
+            function formatNumber(num) {
+                return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+            }
 
-          //Calcular porcentajes
-          const articulosTotal = aniosValor.reduce((a, b) => a + b, 0);
-          const porcentajeAnios = aniosValor.map(
-            (value) => ((value / articulosTotal) * 100).toFixed(2) + "%"
-          );
+            // Funcion que escucha el evento de redimensionamiento del gráfico
+            function configureChartResponsive(chart) {
+                function resizeChart() {
+                    chart.resize();
+                }
+                window.addEventListener("resize", resizeChart);
+            }
 
-          //Crear etiquetas completas (año - cantidad - porcentaje)
-          const fullLabels = aniosLabel.map(
-            (year, i) => `${year} - ${aniosValor[i]} (${porcentajeAnios[i]})`
-          );
+            // Inicializa la llamada a la API para obtener los datos de la busqueda bibliografica realizada
+            fetch("/dataestadistica")
+                .then((res) => res.json())
+                .then((data) => {
+                    // Extraer los datos de países
+                    paisesData = data.data.map((item) => item.pais);
 
-          fetch("https://unpkg.com/world-atlas@2.0.2/countries-50m.json")
-            .then((res) => res.json())
-            .then((datapoint) => {
-              // Convertir el TopoJSON a GeoJSON
-              const paises = ChartGeo.topojson.feature(
-                datapoint,
-                datapoint.objects.countries
-              ).features;
+                    console.log(paisesData);
 
-              console.log(paises.map((d) => d.properties.name));
+                    // Contar la cantidad de veces que aparece cada país
+                    const paisesCuenta = paisesData.reduce((acc, pais) => {
+                        acc[pais] = (acc[pais] || 0) + 1;
+                        return acc;
+                    }, {});
 
-              // Filtrar los países que están en el conteo
-              const dataGrafico = paises.map((d) => ({
-                feature: d,
-                value: paisesCuenta[d.properties.name] || 0,
-              }));
+                    //Procesamiento de datos para el gráfico de años
+                    const yearsData = data.data.map((item) => item.anio);
+                    const yearCount = yearsData.reduce((acc, year) => {
+                        if (year && year !== "No detectado") {
+                            acc[year] = (acc[year] || 0) + 1;
+                        }
+                        return acc;
+                    }, {});
 
-              const backgroundColors = paises.map((d) =>
-                paisesCuenta[d.properties.name] > 0 ? "#002147" : "#e0e0e0"
-              );
+                    //Ordenar los años de más reciente a más antiguo
+                    const aniosOrdenados = Object.keys(yearCount).sort(
+                        (a, b) => b - a,
+                    );
+                    const aniosLabel = aniosOrdenados;
+                    const aniosValor = aniosOrdenados.map(
+                        (year) => yearCount[year],
+                    );
 
-              // Crear el gráfico con propiedades especiales de la libreria
-              const config = {
-                type: "choropleth",
-                data: {
-                  labels: paises.map((country) => country.properties.name),
-                  datasets: [
-                    {
-                      label: "Paises",
-                      data: dataGrafico,
-                      outline: paises,
-                      backgroundColor: backgroundColors,
-                    },
-                  ],
-                },
-                options: {
-                  scales: {
-                    xy: {
-                      projection: "equalEarth",
-                    },
-                  },
-                  plugins: {
-                    legend: {
-                      display: false,
-                    },
-                  },
-                },
-              };
+                    //Calcular porcentajes
+                    const articulosTotal = aniosValor.reduce(
+                        (a, b) => a + b,
+                        0,
+                    );
+                    const porcentajeAnios = aniosValor.map(
+                        (value) =>
+                            ((value / articulosTotal) * 100).toFixed(2) + "%",
+                    );
 
-              // Crear el gráfico referenciando el canvas con el id "geoChart"
-              const geoChart = new Chart(
-                document.getElementById("geoChart"),
-                config
-              );
+                    //Crear etiquetas completas (año - cantidad - porcentaje)
+                    const fullLabels = aniosLabel.map(
+                        (year, i) =>
+                            `${year} - ${aniosValor[i]} (${porcentajeAnios[i]})`,
+                    );
 
-              configureChartResponsive(geoChart);
-            });
+                    fetch(
+                        "https://unpkg.com/world-atlas@2.0.2/countries-50m.json",
+                    )
+                        .then((res) => res.json())
+                        .then((datapoint) => {
+                            // Convertir el TopoJSON a GeoJSON
+                            const paises = ChartGeo.topojson.feature(
+                                datapoint,
+                                datapoint.objects.countries,
+                            ).features;
 
-          //Gráfico circular por año
-          const yearChartCtx = document
-            .getElementById("yearChart")
-            .getContext("2d");
+                            console.log(paises.map((d) => d.properties.name));
 
-          const yearChart = new Chart(yearChartCtx, {
-            type: "doughnut",
-            data: {
-              labels: fullLabels,
-              datasets: [
-                {
-                  data: aniosValor,
-                  backgroundColor: [
-                    "#FF6384",
-                    "#36A2EB",
-                    "#FFCE56",
-                    "#4BC0C0",
-                    "#9966FF",
-                    "#FF9F40",
-                    "#8AC24A",
-                    "#607D8B",
-                    "#E91E63",
-                    "#00BCD4",
-                  ],
-                  borderWidth: 1,
-                  hoverBackgroundColor: [
-                    "#FF6384",
-                    "#36A2EB",
-                    "#FFCE56",
-                    "#4BC0C0",
-                    "#9966FF",
-                    "#FF9F40",
-                    "#8AC24A",
-                    "#607D8B",
-                    "#E91E63",
-                    "#00BCD4",
-                  ].map((color) => color + "DD"),
-                  hoverBorderWidth: 2,
-                },
-              ],
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  position: "right",
-                  labels: {
-                    font: {
-                      size: 12,
-                    },
-                    padding: 20,
-                  },
-                },
-                tooltip: {
-                  callbacks: {
-                    label: function (context) {
-                      const label = context.label || "";
-                      const value = context.raw || 0;
-                      const percentage = porcentajeAnios[context.dataIndex];
-                      return `${label}: ${value} artículos (${percentage})`;
-                    },
-                  },
-                },
-              },
-              cutout: "50%",
-              animation: {
-                animateScale: true,
-                animateRotate: true,
-              },
-            },
-          });
+                            // Filtrar los países que están en el conteo
+                            const dataGrafico = paises.map((d) => ({
+                                feature: d,
+                                value: paisesCuenta[d.properties.name] || 0,
+                            }));
 
-          configureChartResponsive(yearChart);
-        });
-    </script>
-  </body>
+                            const backgroundColors = paises.map((d) =>
+                                paisesCuenta[d.properties.name] > 0
+                                    ? "#002147"
+                                    : "#e0e0e0",
+                            );
+
+                            // Crear el gráfico con propiedades especiales de la libreria
+                            const config = {
+                                type: "choropleth",
+                                data: {
+                                    labels: paises.map(
+                                        (country) => country.properties.name,
+                                    ),
+                                    datasets: [
+                                        {
+                                            label: "Paises",
+                                            data: dataGrafico,
+                                            outline: paises,
+                                            backgroundColor: backgroundColors,
+                                        },
+                                    ],
+                                },
+                                options: {
+                                    scales: {
+                                        xy: {
+                                            projection: "equalEarth",
+                                        },
+                                    },
+                                    plugins: {
+                                        legend: {
+                                            display: false,
+                                        },
+                                    },
+                                },
+                            };
+
+                            // Crear el gráfico referenciando el canvas con el id "geoChart"
+                            const geoChart = new Chart(
+                                document.getElementById("geoChart"),
+                                config,
+                            );
+
+                            configureChartResponsive(geoChart);
+                        });
+
+                    //Gráfico circular por año
+                    const yearChartCtx = document
+                        .getElementById("yearChart")
+                        .getContext("2d");
+
+                    const yearChart = new Chart(yearChartCtx, {
+                        type: "doughnut",
+                        data: {
+                            labels: fullLabels,
+                            datasets: [
+                                {
+                                    data: aniosValor,
+                                    backgroundColor: [
+                                        "#FF6384",
+                                        "#36A2EB",
+                                        "#FFCE56",
+                                        "#4BC0C0",
+                                        "#9966FF",
+                                        "#FF9F40",
+                                        "#8AC24A",
+                                        "#607D8B",
+                                        "#E91E63",
+                                        "#00BCD4",
+                                    ],
+                                    borderWidth: 1,
+                                    hoverBackgroundColor: [
+                                        "#FF6384",
+                                        "#36A2EB",
+                                        "#FFCE56",
+                                        "#4BC0C0",
+                                        "#9966FF",
+                                        "#FF9F40",
+                                        "#8AC24A",
+                                        "#607D8B",
+                                        "#E91E63",
+                                        "#00BCD4",
+                                    ].map((color) => color + "DD"),
+                                    hoverBorderWidth: 2,
+                                },
+                            ],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: "right",
+                                    labels: {
+                                        font: {
+                                            size: 12,
+                                        },
+                                        padding: 20,
+                                    },
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (context) {
+                                            const label = context.label || "";
+                                            const value = context.raw || 0;
+                                            const percentage =
+                                                porcentajeAnios[
+                                                    context.dataIndex
+                                                ];
+                                            return `${label}: ${value} artículos (${percentage})`;
+                                        },
+                                    },
+                                },
+                            },
+                            cutout: "50%",
+                            animation: {
+                                animateScale: true,
+                                animateRotate: true,
+                            },
+                        },
+                    });
+
+                    configureChartResponsive(yearChart);
+                });
+        </script>
+    </body>
 </html>

@@ -7,14 +7,11 @@ import os
 # Crear un blueprint específico para funcionalidades de exportación
 export_bp = Blueprint('export', __name__)
 
-# Lista global donde se almacenan los datos extraídos del procesamiento de PDFs
-data_extraida = []
-
 # Ruta que genera un archivo Excel con los datos seleccionados por el usuario
 @export_bp.route("/exportar_excel", methods=["POST"])
 def exportar():
-    global data_extraida
-
+    data_extraida = shared_data.get_data_extraida()
+    print(data_extraida)
     # Validar que haya datos disponibles para exportar
     if not data_extraida:
         return jsonify(error="No hay datos para exportar.")
@@ -33,6 +30,7 @@ def exportar():
         "autores": "autores",
         "anio": "anio",
         "tema": "tema",
+        "pais": "pais",
         "palabras": "palabras",
         "resumen": "resumen",
     }
