@@ -52,12 +52,11 @@ def extraer_data_pdf(urlarchivo):
         # Detectar el país del contenido del texto
         pais = cliente.models.generate_content(
             model="gemini-2.0-flash",
-            contents=f"¿De qué país es este texto? Solo dime el país en inglés: {texto}"
+            contents=f"Segun lo que opinas ¿De qué país es este texto? Solo dime el país en inglés: {texto_corto}"
         )
-        data["pais"] = pais.text.strip() if pais.text == "" else "N/A"
+        data["pais"] = pais.text.strip() if pais.text else "N/A"
 
     except Exception as e:
-        # Si ocurre un error con la API, registrar el mensaje de error en el campo resumen
         data["resumen"] = "N/A"
         data["pais"] = "N/A"
 

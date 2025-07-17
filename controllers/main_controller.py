@@ -12,6 +12,7 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route("/", methods=["GET", "POST"])
 def home():
     try:
+        shared_data.clear_uploaded_files()
         # Mostrar la página de inicio con los datos actuales (sin limpiar)
         return render_template("index.html", data_list=shared_data.get_data_extraida())
     except Exception as e:
