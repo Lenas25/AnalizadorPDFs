@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify, url_for, send_from_directory, cur
 from openpyxl import Workbook                      # Para crear archivos Excel
 from openpyxl.styles import PatternFill, Border, Side, Font, Alignment  # Estilos para Excel
 import os
+from controllers import shared_data
 
 # Crear un blueprint específico para funcionalidades de exportación
 export_bp = Blueprint('export', __name__)

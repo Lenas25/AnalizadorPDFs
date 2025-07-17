@@ -3,11 +3,10 @@ from flask import Blueprint, render_template, request, redirect, url_for, jsonif
 from services.pdf_service import extraer_data_pdf
 import os
 import json
+from controllers import shared_data
 
 # Crear un blueprint para las rutas principales de la aplicación
 main_bp = Blueprint('main', __name__)
-
-data_extraida = []
 
 # Ruta de la página principal (inicio)
 @main_bp.route("/", methods=["GET", "POST"])
@@ -51,13 +50,13 @@ def buscar_titulo():
 
                             # Comparar el término de búsqueda con el título del PDF
                             if data and "titulo" in data and termino_busqueda in data["titulo"].lower():
-                                data_extraida.append(data)
+                                shared_data.add_data_extraida(data)
                         except Exception as e:
                             print(f"Error procesando {nombrearchivo}: {str(e)}")
                             continue
 
                 # Mostrar resultados en la misma plantilla de inicio
-                return render_template("index.html", data_list=data_extraida)
+                return render_template("index.html", data_list=shared_data.get_data_extraida())
             except ImportError:
                 return render_template("index.html", error="Error: No se pudo importar el servicio de PDF")
             except FileNotFoundError:
