@@ -1,24 +1,25 @@
 class FileManager {
   constructor() {
+    console.log("Inicializando FileManager...");
+
+    // Obtener elementos del DOM
     this.uploadBtn = document.getElementById("upload-btn");
     this.fileInput = document.getElementById("file-input");
     this.filesContainer = document.getElementById("files-container");
     this.extractForm = document.getElementById("extract-form");
     this.extractBtn = document.getElementById("extract-btn");
     this.uploadStatus = document.getElementById("upload-status");
-    // Check if all required elements exist
-    if (
-      !this.uploadBtn ||
-      !this.fileInput ||
-      !this.filesContainer ||
-      !this.extractForm ||
-      !this.extractBtn ||
-      !this.uploadStatus
-    ) {
-      console.error("One or more required DOM elements not found");
-      return;
-    }
 
+    console.log("Elementos encontrados:", {
+      uploadBtn: !!this.uploadBtn,
+      fileInput: !!this.fileInput,
+      filesContainer: !!this.filesContainer,
+      extractForm: !!this.extractForm,
+      extractBtn: !!this.extractBtn,
+      uploadStatus: !!this.uploadStatus,
+    });
+
+    // Inicializar eventos y cargar archivos
     this.initEventListeners();
     this.loadFiles();
   }
@@ -41,8 +42,23 @@ class FileManager {
       });
     }
 
+    // Event listener para el formulario de extracción
     if (this.extractForm) {
+      console.log("Agregando event listener al formulario de extracción");
       this.extractForm.addEventListener("submit", (e) => {
+        console.log("Evento submit del formulario capturado");
+        e.preventDefault();
+        this.extractData();
+      });
+    } else {
+      console.error("No se encontró el formulario de extracción");
+    }
+
+    // Event listener adicional para el botón directamente (como respaldo)
+    if (this.extractBtn) {
+      console.log("Agregando event listener directo al botón de extracción");
+      this.extractBtn.addEventListener("click", (e) => {
+        console.log("Click directo en el botón de extracción");
         e.preventDefault();
         this.extractData();
       });
@@ -161,17 +177,20 @@ class FileManager {
   }
 
   async extractData() {
+    console.log("Ejecutando extractData()...");
     try {
       this.showExtractStatus("Extrayendo datos...", "info");
       if (this.extractBtn) {
         this.extractBtn.disabled = true;
       }
 
+      console.log("Enviando petición a /extract_from_list");
       const response = await fetch("/extract_from_list", {
         method: "POST",
       });
 
       const result = await response.json();
+      console.log("Respuesta recibida:", result);
 
       if (response.ok) {
         this.showExtractStatus("Datos extraídos correctamente", "success");
@@ -211,12 +230,105 @@ class FileManager {
       }, 3000);
     }
   }
+
+  showExtractStatus(message, type) {
+    if (this.uploadStatus) {
+      this.uploadStatus.textContent = message;
+      this.uploadStatus.className = `status-message ${type}`;
+
+      // Limpiar el mensaje después de 3 segundos
+      setTimeout(() => {
+        if (this.uploadStatus) {
+          this.uploadStatus.textContent = "";
+          this.uploadStatus.className = "";
+        }
+      }, 3000);
+    }
+  }
+}
+
+// Función global simple para manejar la extracción
+async function handleExtraction(event) {
+  event.preventDefault();
+  console.log("Función de extracción ejecutada");
+
+  const extractBtn = document.getElementById("extract-btn");
+  const uploadStatus = document.getElementById("upload-status");
+
+  try {
+    // Mostrar estado de extracción
+    if (uploadStatus) {
+      uploadStatus.textContent = "Extrayendo datos...";
+      uploadStatus.className = "status-message info";
+    }
+
+    if (extractBtn) {
+      extractBtn.disabled = true;
+    }
+
+    console.log("Enviando petición a /extract_from_list");
+    const response = await fetch("/extract_from_list", {
+      method: "POST",
+    });
+
+    const result = await response.json();
+    console.log(result);
+    console.log("Respuesta recibida:", result);
+
+    if (response.ok && result.success) {
+      // Mostrar mensaje de éxito
+      if (uploadStatus) {
+        uploadStatus.textContent = `Datos extraídos correctamente (${result.data_count} archivos procesados)`;
+        uploadStatus.className = "status-message success";
+      }
+
+      // Redireccionar después de un breve delay
+      setTimeout(() => {
+        if (result.redirect_url) {
+          window.location.href = "/";
+        } else {
+          window.location.reload();
+        }
+      }, 1500);
+    } else {
+      // Manejar errores del servidor
+      if (uploadStatus) {
+        uploadStatus.textContent = result.error || "Error al extraer datos";
+        uploadStatus.className = "status-message error";
+      }
+      if (extractBtn) {
+        extractBtn.disabled = false;
+      }
+    }
+  } catch (error) {
+    if (uploadStatus) {
+      uploadStatus.textContent = "Error de conexión";
+      uploadStatus.className = "status-message error";
+    }
+    if (extractBtn) {
+      extractBtn.disabled = false;
+    }
+    console.error("Error:", error);
+  }
 }
 
 // Inicializar el gestor de archivos cuando se carga la página
 document.addEventListener("DOMContentLoaded", () => {
   try {
     window.fileManager = new FileManager();
+
+    // Agregar event listener al formulario de extracción
+    const extractForm = document.getElementById("extract-form");
+    if (extractForm) {
+      console.log("Agregando event listener al formulario");
+      extractForm.addEventListener("submit", (e) => {
+        console.log("Evento submit capturado");
+        e.preventDefault();
+        handleExtraction();
+      });
+    } else {
+      console.error("No se encontró el formulario de extracción");
+    }
   } catch (error) {
     console.error("Error initializing FileManager:", error);
   }

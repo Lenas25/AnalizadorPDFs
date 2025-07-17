@@ -48,7 +48,11 @@
                 <ul id="files-container">
                     <!-- Los archivos se mostrarán aquí dinámicamente -->
                 </ul>
-                <form id="extract-form" class="form-section">
+                <form
+                    id="extract-form"
+                    class="form-section"
+                    onsubmit="handleExtraction(); return false;"
+                >
                     <button type="submit" class="btn" id="extract-btn">
                         Extraer Datos
                     </button>

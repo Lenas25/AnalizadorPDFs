@@ -40,7 +40,6 @@ def buscar_titulo():
 
         if termino_busqueda:
             try:
-
                 # Recorrer todos los archivos PDF en la carpeta de subidas
                 for nombrearchivo in os.listdir(current_app.config['UPLOAD_FOLDER']):
                     if nombrearchivo.endswith(".pdf"):
