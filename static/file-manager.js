@@ -1,335 +1,222 @@
-class FileManager {
+// Clase para gestionar toda la lógica de la subida, eliminación y extracción de archivos en el frontend.
+class GestorArchivos {
   constructor() {
-    console.log("Inicializando FileManager...");
+    console.log("Inicializando Gestor de Archivos...");
 
-    // Obtener elementos del DOM
-    this.uploadBtn = document.getElementById("upload-btn");
-    this.fileInput = document.getElementById("file-input");
-    this.filesContainer = document.getElementById("files-container");
-    this.extractForm = document.getElementById("extract-form");
-    this.extractBtn = document.getElementById("extract-btn");
-    this.uploadStatus = document.getElementById("upload-status");
+    // Obtener referencias a los elementos del DOM que se van a manipular.
+    this.botonSubir = document.getElementById("upload-btn");
+    this.entradaArchivo = document.getElementById("file-input");
+    this.contenedorArchivos = document.getElementById("files-container");
+    this.formularioExtraer = document.getElementById("extract-form");
+    this.botonExtraer = document.getElementById("extract-btn");
+    this.estadoSubida = document.getElementById("upload-status");
 
-    console.log("Elementos encontrados:", {
-      uploadBtn: !!this.uploadBtn,
-      fileInput: !!this.fileInput,
-      filesContainer: !!this.filesContainer,
-      extractForm: !!this.extractForm,
-      extractBtn: !!this.extractBtn,
-      uploadStatus: !!this.uploadStatus,
-    });
-
-    // Inicializar eventos y cargar archivos
-    this.initEventListeners();
-    this.loadFiles();
+    // Inicializar los escuchadores de eventos y cargar la lista de archivos existentes en el servidor.
+    this.inicializarEventListeners();
+    this.cargarArchivos();
   }
 
-  initEventListeners() {
-    // Check if elements exist before adding event listeners
-    if (this.uploadBtn) {
-      this.uploadBtn.addEventListener("click", () => {
-        if (this.fileInput) {
-          this.fileInput.click();
+  // Método para configurar todos los eventos de clic y cambio.
+  inicializarEventListeners() {
+    // Evento para el botón de subir: simula un clic en el input de archivo oculto.
+    if (this.botonSubir) {
+      this.botonSubir.addEventListener("click", () => {
+        if (this.entradaArchivo) {
+          this.entradaArchivo.click();
         }
       });
     }
 
-    if (this.fileInput) {
-      this.fileInput.addEventListener("change", (e) => {
+    // Evento para el input de archivo: cuando el usuario selecciona un archivo, se llama a la función de subida.
+    if (this.entradaArchivo) {
+      this.entradaArchivo.addEventListener("change", (e) => {
         if (e.target.files.length > 0) {
-          this.uploadFile(e.target.files[0]);
+          this.subirArchivo(e.target.files[0]);
         }
       });
     }
 
-    // Event listener para el formulario de extracción
-    if (this.extractForm) {
-      console.log("Agregando event listener al formulario de extracción");
-      this.extractForm.addEventListener("submit", (e) => {
-        console.log("Evento submit del formulario capturado");
-        e.preventDefault();
-        this.extractData();
-      });
-    } else {
-      console.error("No se encontró el formulario de extracción");
-    }
-
-    // Event listener adicional para el botón directamente (como respaldo)
-    if (this.extractBtn) {
-      console.log("Agregando event listener directo al botón de extracción");
-      this.extractBtn.addEventListener("click", (e) => {
-        console.log("Click directo en el botón de extracción");
-        e.preventDefault();
-        this.extractData();
+    // Evento para el formulario de extracción: previene el envío normal y llama a la función de extracción.
+    if (this.formularioExtraer) {
+      this.formularioExtraer.addEventListener("submit", (e) => {
+        e.preventDefault(); // Evita que la página se recargue.
+        this.extraerDatos();
       });
     }
   }
 
-  async uploadFile(file) {
+  // Sube un archivo al servidor usando una petición `fetch`.
+  async subirArchivo(archivo) {
     const formData = new FormData();
-    formData.append("pdf", file);
+    formData.append("pdf", archivo); // Prepara los datos del formulario para el envío.
 
     try {
-      this.showUploadStatus("Subiendo archivo...", "info");
+      this.mostrarEstadoSubida("Subiendo archivo...", "info");
 
-      const response = await fetch("/upload_file", {
+      // Envía el archivo al endpoint '/subir_archivo' en el backend.
+      const respuesta = await fetch("/subir_archivo", {
         method: "POST",
         body: formData,
       });
 
-      const result = await response.json();
+      const resultado = await respuesta.json(); // Convierte la respuesta a JSON.
 
-      if (response.ok) {
-        this.showUploadStatus("Archivo subido correctamente", "success");
-        this.renderFiles(result.files);
-        this.fileInput.value = ""; // Limpiar el input
+      if (respuesta.ok) {
+        this.mostrarEstadoSubida("Archivo subido correctamente", "success");
+        this.mostrarArchivos(resultado.files); // Actualiza la lista de archivos en la interfaz.
+        this.entradaArchivo.value = ""; // Limpia el input para poder subir el mismo archivo de nuevo.
       } else {
-        this.showUploadStatus(
-          result.error || "Error al subir el archivo",
+        this.mostrarEstadoSubida(
+          resultado.error || "Error al subir el archivo",
           "error",
         );
       }
     } catch (error) {
-      this.showUploadStatus("Error de conexión", "error");
-      console.error("Error:", error);
+      this.mostrarEstadoSubida("Error de conexión con el servidor", "error");
+      console.error("Error en la subida:", error);
     }
   }
 
-  async deleteFile(filename) {
+  // Elimina un archivo del servidor y de la lista.
+  async eliminarArchivo(nombreArchivo) {
     try {
-      const response = await fetch(
-        `/delete_file/${encodeURIComponent(filename)}`,
+      // Envía una petición DELETE al backend para eliminar el archivo.
+      const respuesta = await fetch(
+        `/eliminar_archivo/${encodeURIComponent(nombreArchivo)}`,
         {
           method: "DELETE",
         },
       );
 
-      const result = await response.json();
+      const resultado = await respuesta.json();
 
-      if (response.ok) {
-        this.showUploadStatus("Archivo eliminado correctamente", "success");
-        this.renderFiles(result.files);
+      if (respuesta.ok) {
+        this.mostrarEstadoSubida("Archivo eliminado correctamente", "success");
+        this.mostrarArchivos(resultado.files); // Actualiza la lista de archivos.
       } else {
-        this.showUploadStatus(
-          result.error || "Error al eliminar el archivo",
+        this.mostrarEstadoSubida(
+          resultado.error || "Error al eliminar el archivo",
           "error",
         );
       }
     } catch (error) {
-      this.showUploadStatus("Error de conexión", "error");
-      console.error("Error:", error);
+      this.mostrarEstadoSubida("Error de conexión con el servidor", "error");
+      console.error("Error al eliminar:", error);
     }
   }
 
-  async loadFiles() {
+  // Carga la lista de archivos que ya están en el servidor al cargar la página.
+  async cargarArchivos() {
     try {
-      const response = await fetch("/get_files");
-      const result = await response.json();
+      const respuesta = await fetch("/get_archivos");
+      const resultado = await respuesta.json();
 
-      if (response.ok) {
-        this.renderFiles(result.files);
+      if (respuesta.ok) {
+        this.mostrarArchivos(resultado.files);
       }
     } catch (error) {
-      console.error("Error cargando archivos:", error);
+      console.error("Error cargando archivos iniciales:", error);
     }
   }
 
-  renderFiles(files) {
-    if (!this.filesContainer) {
-      console.error("Files container not found");
-      return;
-    }
+  // Renderiza (dibuja) la lista de archivos en el contenedor del DOM.
+  mostrarArchivos(archivos) {
+    if (!this.contenedorArchivos) return;
 
-    if (!files || files.length === 0) {
-      this.filesContainer.innerHTML =
+    // Si no hay archivos, muestra un mensaje y deshabilita el botón de extraer.
+    if (!archivos || archivos.length === 0) {
+      this.contenedorArchivos.innerHTML =
         '<li class="no-files">No hay archivos subidos</li>';
-      if (this.extractBtn) {
-        this.extractBtn.disabled = true;
-      }
+      if (this.botonExtraer) this.botonExtraer.disabled = true;
       return;
     }
 
-    if (this.extractBtn) {
-      this.extractBtn.disabled = false;
-    }
+    // Si hay archivos, habilita el botón de extraer.
+    if (this.botonExtraer) this.botonExtraer.disabled = false;
 
-    const filesHTML = files
+    // Crea el HTML para cada archivo de la lista.
+    const archivosHTML = archivos
       .map(
-        (file) => `
+        (archivo) => `
             <li class="file-item">
                 <div class="file-info">
                     <span class="file-icon">📄</span>
-                    <span class="file-name">${file.filename}</span>
+                    <span class="file-name">${archivo.filename}</span>
                 </div>
-                <button
-                    class="delete-btn"
-                    onclick="fileManager.deleteFile('${file.filename}')"
-                    title="Eliminar archivo"
-                >
+                <button class="delete-btn" onclick="gestorArchivos.eliminarArchivo('${archivo.filename}')" title="Eliminar archivo">
                     🗑️
                 </button>
-            </li>
-        `,
+            </li>`,
       )
       .join("");
 
-    this.filesContainer.innerHTML = filesHTML;
+    this.contenedorArchivos.innerHTML = archivosHTML;
   }
 
-  async extractData() {
-    console.log("Ejecutando extractData()...");
+  // Envía la señal al backend para que procese todos los archivos de la lista.
+  async extraerDatos() {
     try {
-      this.showExtractStatus("Extrayendo datos...", "info");
-      if (this.extractBtn) {
-        this.extractBtn.disabled = true;
-      }
+      this.mostrarEstadoExtraccion(
+        "Extrayendo datos, por favor espera...",
+        "info",
+      );
+      if (this.botonExtraer) this.botonExtraer.disabled = true; // Deshabilita el botón durante el proceso.
 
-      console.log("Enviando petición a /extract_from_list");
-      const response = await fetch("/extract_from_list", {
-        method: "POST",
-      });
+      const respuesta = await fetch("/extraer_de_lista", { method: "POST" });
+      const resultado = await respuesta.json();
 
-      const result = await response.json();
-      console.log("Respuesta recibida:", result);
-
-      if (response.ok) {
-        this.showExtractStatus("Datos extraídos correctamente", "success");
-        // Recargar la página para mostrar los resultados
+      if (respuesta.ok) {
+        this.mostrarEstadoExtraccion(
+          "Datos extraídos correctamente. Redirigiendo...",
+          "success",
+        );
+        // Recarga la página después de 1 segundo para mostrar los resultados en la tabla.
         setTimeout(() => {
-          window.location.reload();
+          window.location.href = "/";
         }, 1000);
       } else {
-        this.showExtractStatus(
-          result.error || "Error al extraer datos",
+        this.mostrarEstadoExtraccion(
+          resultado.error || "Error al extraer datos",
           "error",
         );
-        if (this.extractBtn) {
-          this.extractBtn.disabled = false;
-        }
+        if (this.botonExtraer) this.botonExtraer.disabled = false; // Rehabilita el botón si hay error.
       }
     } catch (error) {
-      this.showExtractStatus("Error de conexión", "error");
-      if (this.extractBtn) {
-        this.extractBtn.disabled = false;
-      }
-      console.error("Error:", error);
+      this.mostrarEstadoExtraccion(
+        "Error de conexión con el servidor",
+        "error",
+      );
+      if (this.botonExtraer) this.botonExtraer.disabled = false;
+      console.error("Error en la extracción:", error);
     }
   }
 
-  showUploadStatus(message, type) {
-    if (this.uploadStatus) {
-      this.uploadStatus.textContent = message;
-      this.uploadStatus.className = `status-message ${type}`;
-
-      // Limpiar el mensaje después de 3 segundos
+  // Muestra un mensaje temporal sobre el estado de la subida.
+  mostrarEstadoSubida(mensaje, tipo) {
+    if (this.estadoSubida) {
+      this.estadoSubida.textContent = mensaje;
+      this.estadoSubida.className = `status-message ${tipo}`;
+      // El mensaje desaparece después de 3 segundos.
       setTimeout(() => {
-        if (this.uploadStatus) {
-          this.uploadStatus.textContent = "";
-          this.uploadStatus.className = "";
+        if (this.estadoSubida) {
+          this.estadoSubida.textContent = "";
+          this.estadoSubida.className = "";
         }
       }, 3000);
     }
   }
 
-  showExtractStatus(message, type) {
-    if (this.uploadStatus) {
-      this.uploadStatus.textContent = message;
-      this.uploadStatus.className = `status-message ${type}`;
-
-      // Limpiar el mensaje después de 3 segundos
-      setTimeout(() => {
-        if (this.uploadStatus) {
-          this.uploadStatus.textContent = "";
-          this.uploadStatus.className = "";
-        }
-      }, 3000);
+  // Muestra un mensaje sobre el estado de la extracción (no se borra automáticamente si es exitoso).
+  mostrarEstadoExtraccion(mensaje, tipo) {
+    if (this.estadoSubida) {
+      this.estadoSubida.textContent = mensaje;
+      this.estadoSubida.className = `status-message ${tipo}`;
     }
   }
 }
 
-// Función global simple para manejar la extracción
-async function handleExtraction(event) {
-  event.preventDefault();
-  console.log("Función de extracción ejecutada");
-
-  const extractBtn = document.getElementById("extract-btn");
-  const uploadStatus = document.getElementById("upload-status");
-
-  try {
-    // Mostrar estado de extracción
-    if (uploadStatus) {
-      uploadStatus.textContent = "Extrayendo datos...";
-      uploadStatus.className = "status-message info";
-    }
-
-    if (extractBtn) {
-      extractBtn.disabled = true;
-    }
-
-    console.log("Enviando petición a /extract_from_list");
-    const response = await fetch("/extract_from_list", {
-      method: "POST",
-    });
-
-    const result = await response.json();
-    console.log(result);
-    console.log("Respuesta recibida:", result);
-
-    if (response.ok && result.success) {
-      // Mostrar mensaje de éxito
-      if (uploadStatus) {
-        uploadStatus.textContent = `Datos extraídos correctamente (${result.data_count} archivos procesados)`;
-        uploadStatus.className = "status-message success";
-      }
-
-      // Redireccionar después de un breve delay
-      setTimeout(() => {
-        if (result.redirect_url) {
-          window.location.href = "/";
-        } else {
-          window.location.reload();
-        }
-      }, 1500);
-    } else {
-      // Manejar errores del servidor
-      if (uploadStatus) {
-        uploadStatus.textContent = result.error || "Error al extraer datos";
-        uploadStatus.className = "status-message error";
-      }
-      if (extractBtn) {
-        extractBtn.disabled = false;
-      }
-    }
-  } catch (error) {
-    if (uploadStatus) {
-      uploadStatus.textContent = "Error de conexión";
-      uploadStatus.className = "status-message error";
-    }
-    if (extractBtn) {
-      extractBtn.disabled = false;
-    }
-    console.error("Error:", error);
-  }
-}
-
-// Inicializar el gestor de archivos cuando se carga la página
+// Inicializa la clase GestorArchivos cuando el contenido del DOM se haya cargado completamente.
 document.addEventListener("DOMContentLoaded", () => {
-  try {
-    window.fileManager = new FileManager();
-
-    // Agregar event listener al formulario de extracción
-    const extractForm = document.getElementById("extract-form");
-    if (extractForm) {
-      console.log("Agregando event listener al formulario");
-      extractForm.addEventListener("submit", (e) => {
-        console.log("Evento submit capturado");
-        e.preventDefault();
-        handleExtraction();
-      });
-    } else {
-      console.error("No se encontró el formulario de extracción");
-    }
-  } catch (error) {
-    console.error("Error initializing FileManager:", error);
-  }
+  // Se crea una instancia global para que se pueda acceder desde los botones onclick en el HTML.
+  window.gestorArchivos = new GestorArchivos();
 });

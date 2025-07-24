@@ -1,72 +1,86 @@
-function toggleColumna(checkbox, columna) {
-  const columnas = document.querySelectorAll(`[data-columna="${columna}"]`);
+// Función para mostrar u ocultar una columna de la tabla de resultados.
+function alternarColumna(casilla, nombreColumna) {
+  // Selecciona todas las celdas (th y td) que pertenecen a una columna específica.
+  const columnas = document.querySelectorAll(
+    `[data-columna="${nombreColumna}"]`,
+  );
+  // Recorre cada celda y cambia su estilo 'display' según si la casilla está marcada o no.
   columnas.forEach((col) => {
-    col.style.display = checkbox.checked ? "table-cell" : "none";
+    col.style.display = casilla.checked ? "table-cell" : "none";
   });
 }
 
-function enviarDatosExcel(event) {
-  event.preventDefault();
-  const checkboxes = document.querySelectorAll(
+// Función para enviar los datos seleccionados al backend para generar un archivo Excel.
+function enviarDatosExcel(evento) {
+  evento.preventDefault(); // Evita que el enlace recargue la página.
+
+  // Selecciona todas las casillas de verificación de las columnas.
+  const casillas = document.querySelectorAll(
     '.options-container input[type="checkbox"]',
   );
-  const columnasSeleccionadas = Array.from(checkboxes)
-    .filter((checkbox) => checkbox.checked)
-    .map((checkbox) => checkbox.name);
 
+  // Filtra solo las casillas que están marcadas y obtiene sus nombres (que corresponden a las columnas).
+  const columnasSeleccionadas = Array.from(casillas)
+    .filter((casilla) => casilla.checked)
+    .map((casilla) => casilla.name);
+
+  // La columna 'titulo' siempre se incluye, ya que es la principal.
   columnasSeleccionadas.push("titulo");
 
+  // Valida que el usuario haya seleccionado al menos una columna adicional.
   if (columnasSeleccionadas.length === 1) {
     alert("Por favor, selecciona al menos una columna para exportar.");
     return;
   }
 
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = "/exportar_excel";
+  // Crea un formulario oculto en la memoria para enviar los datos.
+  const formulario = document.createElement("form");
+  formulario.method = "POST";
+  formulario.action = "/exportar_excel"; // Apunta al endpoint de exportación en Flask.
 
+  // Agrega cada columna seleccionada como un campo oculto en el formulario.
   columnasSeleccionadas.forEach((columna) => {
-    const input = document.createElement("input");
-    input.type = "hidden";
-    input.name = "columnas";
-    input.value = columna;
-    form.appendChild(input);
+    const entrada = document.createElement("input");
+    entrada.type = "hidden";
+    entrada.name = "columnas";
+    entrada.value = columna;
+    formulario.appendChild(entrada);
   });
 
-  document.body.appendChild(form);
-
+  // Envía la petición fetch al servidor con los datos del formulario.
   fetch("/exportar_excel", {
     method: "POST",
-    body: new FormData(form),
+    body: new FormData(formulario),
   })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.error) {
-        alert(data.error);
-      } else if (data.url) {
-        const a = document.createElement("a");
-        a.href = data.url;
-        a.download = "datos.xlsx";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-        setTimeout(() => {
-          window.location.href = "/";
-        }, 500);
+    .then((respuesta) => respuesta.json())
+    .then((datos) => {
+      // Si el servidor devuelve un error, lo muestra en una alerta.
+      if (datos.error) {
+        alert(datos.error);
+      } else if (datos.url) {
+        // Si el servidor devuelve una URL de descarga, crea un enlace temporal para iniciarla.
+        const enlace = document.createElement("a");
+        enlace.href = datos.url;
+        enlace.download = "datos.xlsx"; // Nombre del archivo que se descargará.
+        document.body.appendChild(enlace);
+        enlace.click(); // Simula un clic en el enlace para abrir el diálogo de descarga.
+        document.body.removeChild(enlace); // Elimina el enlace temporal.
       }
     })
     .catch((error) => {
-      console.error("Error:", error);
+      console.error("Error al exportar:", error);
       alert("Ocurrió un error al intentar exportar los datos.");
     });
 }
 
+// Se ejecuta cuando el contenido del DOM se ha cargado completamente.
 document.addEventListener("DOMContentLoaded", () => {
-  const checkboxes = document.querySelectorAll(
+  // Selecciona todas las casillas de verificación.
+  const casillas = document.querySelectorAll(
     '.options-container input[type="checkbox"]',
   );
-  checkboxes.forEach((checkbox) => {
-    toggleColumna(checkbox, checkbox.name);
+  // Itera sobre ellas para asegurarse de que el estado inicial de visibilidad de las columnas coincida con el estado de las casillas.
+  casillas.forEach((casilla) => {
+    alternarColumna(casilla, casilla.name);
   });
 });

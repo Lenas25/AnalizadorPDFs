@@ -85,13 +85,11 @@
             }
 
             // Inicializa la llamada a la API para obtener los datos de la busqueda bibliografica realizada
-            fetch("/dataestadistica")
+            fetch("/datos_estadistica")
                 .then((res) => res.json())
                 .then((data) => {
                     // Extraer los datos de países
-                    paisesData = data.data.map((item) => item.pais);
-
-                    console.log(paisesData);
+                    paisesData = data.datos.map((item) => item.pais);
 
                     // Contar la cantidad de veces que aparece cada país
                     const paisesCuenta = paisesData.reduce((acc, pais) => {
@@ -100,7 +98,7 @@
                     }, {});
 
                     //Procesamiento de datos para el gráfico de años
-                    const yearsData = data.data.map((item) => item.anio);
+                    const yearsData = data.datos.map((item) => item.anio);
                     const yearCount = yearsData.reduce((acc, year) => {
                         if (year && year !== "No detectado") {
                             acc[year] = (acc[year] || 0) + 1;

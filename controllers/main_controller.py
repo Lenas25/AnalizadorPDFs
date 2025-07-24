@@ -1,62 +1,71 @@
 # Importar módulos necesarios de Flask y el servicio de procesamiento de PDF
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, current_app
-from services.pdf_service import extraer_data_pdf
+from services.pdf_service import extraer_datos_pdf # Servicio para extraer información de PDFs
 import os
 import json
-from controllers import shared_data
+from controllers import shared_data as datos_compartidos # Importa los datos compartidos de la aplicación
 
 # Crear un blueprint para las rutas principales de la aplicación
 main_bp = Blueprint('main', __name__)
 
 # Ruta de la página principal (inicio)
 @main_bp.route("/", methods=["GET", "POST"])
-def home():
+def inicio():
     try:
-        shared_data.clear_uploaded_files()
-        # Mostrar la página de inicio con los datos actuales (sin limpiar)
-        return render_template("index.html", data_list=shared_data.get_data_extraida())
+        # Limpia la lista de archivos subidos al cargar la página principal
+        datos_compartidos.clear_archivos_subidos()
+        # Muestra la página de inicio con la lista de datos extraídos (si existen)
+        return render_template("index.html", lista_datos=datos_compartidos.get_datos_extraidos())
     except Exception as e:
+        # En caso de error, muestra la página de inicio con un mensaje de error
         return render_template("index.html", error=f"Error al cargar la página: {str(e)}")
 
 # Ruta para mostrar la página de estadísticas
 @main_bp.route("/estadisticas", methods=["GET", "POST"])
 def estadisticas():
+    # Si la petición es GET, muestra la página de estadísticas
     if request.method == "GET":
         return render_template("estadisticas.html")
-    # Si es POST, redirige a inicio
-    return redirect(url_for("main.home"))
+    # Si es POST, redirige a la página de inicio
+    return redirect(url_for("main.inicio"))
 
 # Ruta para obtener los datos estadísticos extraídos en formato JSON (usado por JavaScript)
-@main_bp.route("/dataestadistica", methods=["GET"])
-def data_estadistica():
-    return jsonify(data=shared_data.get_data_extraida())
+@main_bp.route("/datos_estadistica", methods=["GET"])
+def datos_estadistica():
+    # Devuelve los datos extraídos en formato JSON para ser consumidos por el frontend
+    return jsonify(datos=datos_compartidos.get_datos_extraidos())
 
 # Ruta que busca archivos PDF en la carpeta local 'uploads' según el título ingresado por el usuario
 @main_bp.route("/buscar", methods=["POST", "GET"])
 def buscar_titulo():
-    shared_data.clear_data_extraida()  # Reiniciar resultados anteriores
+    # Limpia los resultados de búsquedas anteriores
+    datos_compartidos.clear_datos_extraidos()
 
+    # Si la petición es POST, procesa la búsqueda
     if request.method == "POST":
         termino_busqueda = request.form.get("buscar_tema", "").lower()
 
+        # Verifica que se haya ingresado un término de búsqueda
         if termino_busqueda:
             try:
-                # Recorrer todos los archivos PDF en la carpeta de subidas
-                for nombrearchivo in os.listdir(current_app.config['UPLOAD_FOLDER']):
-                    if nombrearchivo.endswith(".pdf"):
-                        urlarchivo = os.path.join(current_app.config['UPLOAD_FOLDER'], nombrearchivo)
+                # Recorre todos los archivos en la carpeta de subidas
+                for nombre_archivo in os.listdir(current_app.config['UPLOAD_FOLDER']):
+                    if nombre_archivo.endswith(".pdf"):
+                        ruta_archivo = os.path.join(current_app.config['UPLOAD_FOLDER'], nombre_archivo)
                         try:
-                            data = extraer_data_pdf(urlarchivo)
+                            # Extrae los datos del PDF
+                            datos = extraer_datos_pdf(ruta_archivo)
 
-                            # Comparar el término de búsqueda con el título del PDF
-                            if data and "titulo" in data and termino_busqueda in data["titulo"].lower():
-                                shared_data.add_data_extraida(data)
+                            # Compara el término de búsqueda con el título del PDF (en minúsculas)
+                            if datos and "titulo" in datos and termino_busqueda in datos["titulo"].lower():
+                                datos_compartidos.add_datos_extraidos(datos)
                         except Exception as e:
-                            print(f"Error procesando {nombrearchivo}: {str(e)}")
+                            # Si hay un error procesando un archivo, lo imprime y continúa
+                            print(f"Error procesando {nombre_archivo}: {str(e)}")
                             continue
 
-                # Mostrar resultados en la misma plantilla de inicio
-                return render_template("index.html", data_list=shared_data.get_data_extraida())
+                # Muestra los resultados en la plantilla de inicio
+                return render_template("index.html", lista_datos=datos_compartidos.get_datos_extraidos())
             except ImportError:
                 return render_template("index.html", error="Error: No se pudo importar el servicio de PDF")
             except FileNotFoundError:
@@ -64,142 +73,165 @@ def buscar_titulo():
             except Exception as e:
                 return render_template("index.html", error=f"Error durante la búsqueda: {str(e)}")
 
-    # Si no se envió un término de búsqueda válido, redirige a inicio con error
-    return redirect(url_for("main.home", error="Por favor, ingresa un término de búsqueda."))
+    # Si no se envió un término de búsqueda, redirige a inicio con un error
+    return redirect(url_for("main.inicio", error="Por favor, ingresa un término de búsqueda."))
 
-# Ruta para subir archivos PDF, extraer datos de cada uno y mostrarlos en la interfaz (compatibilidad)
-@main_bp.route("/extract", methods=["POST", "GET"])
-def extract():
+# Ruta para subir archivos PDF, extraer datos de cada uno y mostrarlos en la interfaz
+@main_bp.route("/extraer", methods=["POST", "GET"])
+def extraer():
+    # Si la petición es POST, procesa los archivos subidos
     if request.method == "POST":
-        # Obtener los archivos PDF enviados desde el formulario
-        files = request.files.getlist("pdf")
+        # Obtiene la lista de archivos PDF enviados desde el formulario
+        archivos = request.files.getlist("pdf")
 
-        # Validar que todos los archivos sean PDFs
-        if not files or any(not file.filename or not file.filename.endswith('.pdf') for file in files):
+        # Valida que todos los archivos sean PDF válidos
+        if not archivos or any(not archivo.filename or not archivo.filename.endswith('.pdf') for archivo in archivos):
             return render_template("index.html", error="Por favor, sube solo archivos válidos en formato PDF.")
 
-        # Limpiar listas anteriores
-        shared_data.clear_data_extraida()
-        shared_data.clear_uploaded_files()
+        # Limpia las listas de datos y archivos de sesiones anteriores
+        datos_compartidos.clear_datos_extraidos()
+        datos_compartidos.clear_archivos_subidos()
 
-        # Guardar y procesar cada archivo PDF
-        for file in files:
-            if file.filename:
-                print(file.filename)  # Opcional: imprimir el nombre en consola para seguimiento
-                filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], file.filename)
-                file.save(filepath)  # Guardar archivo en carpeta temporal (uploads)
+        # Procesa cada archivo PDF subido
+        for archivo in archivos:
+            if archivo.filename:
+                # Guarda el archivo en la carpeta de subidas
+                ruta_archivo = os.path.join(current_app.config['UPLOAD_FOLDER'], archivo.filename)
+                archivo.save(ruta_archivo)
 
-                # Agregar a la lista de archivos subidos
-                shared_data.add_uploaded_file({
-                    'filename': file.filename,
-                    'filepath': filepath
+                # Agrega la información del archivo a la lista de archivos subidos
+                datos_compartidos.add_archivo_subido({
+                    'filename': archivo.filename,
+                    'filepath': ruta_archivo
                 })
 
-                data = extraer_data_pdf(filepath)  # Extraer metadatos, resumen, país, etc.
+                # Extrae los datos del archivo PDF
+                datos = extraer_datos_pdf(ruta_archivo)
 
-                if data:
-                    shared_data.add_data_extraida(data)
+                # Si se extrajeron datos, los agrega a la lista de datos
+                if datos:
+                    datos_compartidos.add_datos_extraidos(datos)
 
-        # Renderizar los resultados extraídos en la plantilla de inicio
-        return render_template("index.html", data_list=shared_data.get_data_extraida())
+        # Muestra los resultados extraídos en la plantilla de inicio
+        return render_template("index.html", lista_datos=datos_compartidos.get_datos_extraidos())
 
-    # Si se accede por GET o sin archivos, redirige a inicio con error
-    return redirect(url_for("main.home", error="Por favor, adjunta archivos."))
+    # Si se accede por GET, redirige a inicio con un error
+    return redirect(url_for("main.inicio", error="Por favor, adjunta archivos."))
 
 # Ruta para subir archivos individuales y agregarlos a la lista
-@main_bp.route("/upload_file", methods=["POST"])
-def upload_file():
+@main_bp.route("/subir_archivo", methods=["POST"])
+def subir_archivo():
+    # Verifica si se incluyó un archivo en la petición
     if 'pdf' not in request.files:
         return jsonify({'error': 'No se encontró el archivo'}), 400
 
-    file = request.files['pdf']
+    archivo = request.files['pdf']
 
-    if file.filename == '' or file.filename is None:
+    # Verifica si se seleccionó un archivo
+    if archivo.filename == '' or archivo.filename is None:
         return jsonify({'error': 'No se seleccionó ningún archivo'}), 400
 
-    if not file.filename.endswith('.pdf'):
+    # Verifica que el archivo sea un PDF
+    if not archivo.filename.endswith('.pdf'):
         return jsonify({'error': 'Solo se permiten archivos PDF'}), 400
 
-    # Verificar si el archivo ya existe en la lista
-    uploaded_files = shared_data.get_uploaded_files()
-    if any(f['filename'] == file.filename for f in uploaded_files):
+    # Verifica si el archivo ya existe en la lista de subidos
+    archivos_subidos = datos_compartidos.get_archivos_subidos()
+    if any(f['filename'] == archivo.filename for f in archivos_subidos):
         return jsonify({'error': 'El archivo ya existe en la lista'}), 400
 
-    # Guardar el archivo
-    filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], file.filename)
-    file.save(filepath)
+    # Guarda el archivo en el servidor
+    ruta_archivo = os.path.join(current_app.config['UPLOAD_FOLDER'], archivo.filename)
+    archivo.save(ruta_archivo)
 
-    # Agregar a la lista de archivos subidos
-    shared_data.add_uploaded_file({
-        'filename': file.filename,
-        'filepath': filepath
+    # Agrega el archivo a la lista de archivos subidos
+    datos_compartidos.add_archivo_subido({
+        'filename': archivo.filename,
+        'filepath': ruta_archivo
     })
 
+    # Devuelve una respuesta JSON confirmando la subida
     return jsonify({
         'success': True,
-        'filename': file.filename,
-        'files': shared_data.get_uploaded_files()
+        'filename': archivo.filename,
+        'files': datos_compartidos.get_archivos_subidos()
     })
 
 # Ruta para eliminar un archivo de la lista
-@main_bp.route("/delete_file/<filename>", methods=["DELETE"])
-def delete_file(filename):
-    uploaded_files = shared_data.get_uploaded_files()
+@main_bp.route("/eliminar_archivo/<nombre_archivo>", methods=["DELETE"])
+def eliminar_archivo(nombre_archivo):
+    archivos_subidos = datos_compartidos.get_archivos_subidos()
 
-    # Buscar el archivo en la lista
-    file_to_remove = None
-    for i, file_info in enumerate(uploaded_files):
-        if file_info['filename'] == filename:
-            file_to_remove = i
+    # Busca el archivo en la lista para obtener su información
+    indice_a_eliminar = None
+    for i, info_archivo in enumerate(archivos_subidos):
+        if info_archivo['filename'] == nombre_archivo:
+            indice_a_eliminar = i
             break
 
-    if file_to_remove is None:
+    # Si no se encuentra el archivo, devuelve un error
+    if indice_a_eliminar is None:
         return jsonify({'error': 'Archivo no encontrado'}), 404
 
-    # Eliminar el archivo físico
-    filepath = uploaded_files[file_to_remove]['filepath']
+    # Elimina el archivo físico del servidor
+    ruta_archivo = archivos_subidos[indice_a_eliminar]['filepath']
     try:
-        if os.path.exists(filepath):
-            os.remove(filepath)
+        if os.path.exists(ruta_archivo):
+            os.remove(ruta_archivo)
     except Exception as e:
         return jsonify({'error': f'Error al eliminar el archivo: {str(e)}'}), 500
 
-    # Eliminar de la lista
-    shared_data.remove_uploaded_file(filename)
+    # Elimina el archivo de la lista de archivos subidos
+    datos_compartidos.remove_archivo_subido(nombre_archivo)
 
+    # Devuelve una respuesta JSON confirmando la eliminación
     return jsonify({
         'success': True,
         'message': 'Archivo eliminado correctamente',
-        'files': shared_data.get_uploaded_files()
+        'files': datos_compartidos.get_archivos_subidos()
     })
 
-# Ruta para obtener la lista de archivos subidos
-@main_bp.route("/get_files", methods=["GET"])
-def get_files():
-    return jsonify({'files': shared_data.get_uploaded_files()})
+# Ruta para obtener la lista actual de archivos subidos
+@main_bp.route("/get_archivos", methods=["GET"])
+def get_archivos():
+    return jsonify({'files': datos_compartidos.get_archivos_subidos()})
 
-# Ruta para extraer datos de los archivos en la lista
-@main_bp.route("/extract_from_list", methods=["POST"])
-def extract_from_list():
-    uploaded_files = shared_data.get_uploaded_files()
+# Ruta para extraer datos de todos los archivos en la lista
+@main_bp.route("/extraer_de_lista", methods=["POST"])
+def extraer_de_lista():
+    archivos_subidos = datos_compartidos.get_archivos_subidos()
 
-    if not uploaded_files:
+    # Verifica si hay archivos en la lista para procesar
+    if not archivos_subidos:
         return jsonify({'error': 'No hay archivos en la lista para procesar'}), 400
 
-    shared_data.clear_data_extraida()  # Reiniciar datos anteriores
+    # Limpia los datos extraídos anteriormente
+    datos_compartidos.clear_datos_extraidos()
 
-    # Procesar cada archivo en la lista
-    for file_info in uploaded_files:
+    # Procesa cada archivo en la lista de subidos
+    for info_archivo in archivos_subidos:
         try:
-            data = extraer_data_pdf(file_info['filepath'])
-            if data:
-                shared_data.add_data_extraida(data)
+            # Extrae datos del PDF y los agrega a la lista de datos
+            datos = extraer_datos_pdf(info_archivo['filepath'])
+            if datos:
+                datos_compartidos.add_datos_extraidos(datos)
         except Exception as e:
-            print(f"Error procesando {file_info['filename']}: {str(e)}")
+            print(f"Error procesando {info_archivo['filename']}: {str(e)}")
             continue
 
+    # Devuelve una respuesta JSON indicando que el proceso fue exitoso y la URL para redirigir
     return jsonify({
         'success': True,
-        'data_count': len(shared_data.get_data_extraida()),
-        'redirect_url': url_for('main.home')
+        'data_count': len(datos_compartidos.get_datos_extraidos()),
+        'redirect_url': url_for('main.inicio')
     })
+
+# Ruta para refrescar los datos de la aplicación (limpiar todo)
+@main_bp.route("/refrescar", methods=["GET"])
+def refrescar_datos():
+    # Limpia tanto la lista de archivos subidos como la de datos extraídos
+    datos_compartidos.clear_archivos_subidos()
+    datos_compartidos.clear_datos_extraidos()
+
+    # Redirige a la página de inicio, que ahora estará vacía
+    return redirect(url_for("main.inicio"))
